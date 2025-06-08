@@ -8,7 +8,7 @@ import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import client from "../../../../libs/mongoConnect";
 import { User } from "@/models/User";
 
-export const authOptions = {
+const authOptions = {
   secret: process.env.SECRET,
   adapter: MongoDBAdapter(client),
 
