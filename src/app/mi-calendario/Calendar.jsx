@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Calendar from "react-calendar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import LoadingSpinner from "@/app/components/LoadingSpinner";
 import "react-calendar/dist/Calendar.css";
 import "./calendar-enhanced.css";
 import { APPOINTMENT_TYPE_LABELS, APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_LABELS } from "@/constants/appointments";
@@ -17,16 +18,12 @@ export default function MiCalendarStyled() {
   const [loading, setLoading] = useState(true);
 
   // Cargar citas desde la API
-  useEffect(() => {
-    if (status === 'authenticated') {
-      loadAppointments();
-    }
-  }, [status]);
-
-  const loadAppointments = async () => {
+  const loadAppointments = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/appointments');
+      const res = await fetch('/api/appointments', {
+        cache: 'no-store',
+      });
       const data = await res.json();
       
       if (res.ok) {
@@ -37,7 +34,13 @@ export default function MiCalendarStyled() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      loadAppointments();
+    }
+  }, [status, loadAppointments]);
 
   // Convertir citas a formato de eventos para el calendario
   const events = useMemo(() => {
@@ -90,11 +93,7 @@ export default function MiCalendarStyled() {
   };
 
   if (status === 'loading' || loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-xl">Cargando calendario...</div>
-      </div>
-    );
+    return <LoadingSpinner size="lg" message="Cargando calendario..." />;
   }
 
   if (status === 'unauthenticated') {

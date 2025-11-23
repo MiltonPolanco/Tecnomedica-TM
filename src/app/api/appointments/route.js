@@ -30,7 +30,9 @@ export async function GET(req) {
     const endDate = searchParams.get('endDate');
 
     // Buscar el usuario completo para obtener su ID y rol
-    const user = await User.findOne({ email: session.user.email });
+    const user = await User.findOne({ email: session.user.email })
+      .select('_id role')
+      .lean();
     
     if (!user) {
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
@@ -62,9 +64,18 @@ export async function GET(req) {
     const appointments = await Appointment.find(query)
       .populate('patient', 'name email')
       .populate('doctor', 'name email professionalInfo.specialty')
-      .sort({ date: 1, startTime: 1 });
+      .sort({ date: -1, startTime: 1 })
+      .lean();
 
-    return NextResponse.json({ appointments }, { status: 200 });
+    return NextResponse.json(
+      { appointments }, 
+      { 
+        status: 200,
+        headers: {
+          'Cache-Control': 'private, s-maxage=30, stale-while-revalidate=60'
+        }
+      }
+    );
   } catch (error) {
     console.error('Error al obtener citas:', error);
     return NextResponse.json(
@@ -98,14 +109,18 @@ export async function POST(req) {
     }
 
     // Buscar paciente
-    const patient = await User.findOne({ email: session.user.email });
+    const patient = await User.findOne({ email: session.user.email })
+      .select('_id')
+      .lean();
     
     if (!patient) {
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
     }
 
     // Verificar que el doctor existe y tiene rol de doctor
-    const doctor = await User.findById(doctorId);
+    const doctor = await User.findById(doctorId)
+      .select('role')
+      .lean();
     
     if (!doctor || doctor.role !== 'doctor') {
       return NextResponse.json(

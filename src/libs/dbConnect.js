@@ -30,7 +30,9 @@ async function dbConnect() {
     };
 
     cached.promise = mongoose.connect(MONGO_URL, opts).then((mongoose) => {
-      console.log('✅ Conexión a MongoDB establecida');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Conexión a MongoDB establecida');
+      }
       return mongoose;
     });
   }

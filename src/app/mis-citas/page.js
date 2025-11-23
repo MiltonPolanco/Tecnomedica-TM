@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import LoadingSpinner from '@/app/components/LoadingSpinner';
 import { 
   APPOINTMENT_STATUS_LABELS, 
   APPOINTMENT_STATUS_COLORS,
@@ -20,18 +21,12 @@ export default function MisCitasPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    } else if (status === 'authenticated') {
-      loadAppointments();
-    }
-  }, [status, router]);
-
-  const loadAppointments = async () => {
+  const loadAppointments = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/appointments');
+      const res = await fetch('/api/appointments', {
+        cache: 'no-store',
+      });
       const data = await res.json();
       
       if (res.ok) {
@@ -42,7 +37,15 @@ export default function MisCitasPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    } else if (status === 'authenticated') {
+      loadAppointments();
+    }
+  }, [status, router, loadAppointments]);
 
   const handleCancelAppointment = async () => {
     if (!selectedAppointment || !cancelReason.trim()) {
@@ -97,11 +100,7 @@ export default function MisCitasPage() {
   };
 
   if (status === 'loading' || loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-xl">Cargando tus citas...</div>
-      </div>
-    );
+    return <LoadingSpinner size="lg" message="Cargando tus citas..." />;
   }
 
   const filteredAppointments = getFilteredAppointments();

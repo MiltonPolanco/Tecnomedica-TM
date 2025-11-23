@@ -74,11 +74,11 @@ const AppointmentSchema = new Schema({
   toObject: { virtuals: true }
 });
 
-// Índices para búsquedas eficientes
-AppointmentSchema.index({ patient: 1, date: 1 });
-AppointmentSchema.index({ doctor: 1, date: 1 });
-AppointmentSchema.index({ status: 1 });
-AppointmentSchema.index({ date: 1, startTime: 1 });
+// Índices compuestos para búsquedas eficientes
+AppointmentSchema.index({ patient: 1, date: -1, status: 1 });
+AppointmentSchema.index({ doctor: 1, date: -1, status: 1 });
+AppointmentSchema.index({ date: 1, startTime: 1, status: 1 });
+AppointmentSchema.index({ status: 1, date: -1 });
 
 // Virtual para obtener duración en minutos
 AppointmentSchema.virtual('durationMinutes').get(function() {

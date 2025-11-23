@@ -14,7 +14,6 @@ const UserSchema = new Schema({
     lowercase: true,
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Por favor ingresa un email válido'],
-    index: true, // Ya no es necesario declararlo después
   },
   password: {
     type: String,
@@ -64,8 +63,10 @@ const UserSchema = new Schema({
   }
 });
 
-// Índice adicional para mejorar rendimiento en queries por rol
-UserSchema.index({ role: 1 });
+// Índices compuestos para mejorar rendimiento en queries
+UserSchema.index({ role: 1, isActive: 1 });
+UserSchema.index({ 'professionalInfo.specialty': 1 }, { sparse: true });
+// Nota: email ya tiene índice único por la propiedad 'unique: true' en el schema
 
 // Encriptar la contraseña antes de guardar
 UserSchema.pre("save", async function (next) {

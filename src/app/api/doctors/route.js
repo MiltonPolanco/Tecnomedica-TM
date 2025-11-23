@@ -19,9 +19,18 @@ export async function GET(req) {
 
     const doctors = await User.find(query)
       .select('name email professionalInfo image')
-      .sort({ 'professionalInfo.specialty': 1, name: 1 });
+      .sort({ 'professionalInfo.specialty': 1, name: 1 })
+      .lean();
 
-    return NextResponse.json({ doctors }, { status: 200 });
+    return NextResponse.json(
+      { doctors }, 
+      { 
+        status: 200,
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600'
+        }
+      }
+    );
   } catch (error) {
     console.error('Error al obtener doctores:', error);
     return NextResponse.json(

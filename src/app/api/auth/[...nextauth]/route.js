@@ -74,7 +74,12 @@ const authOptions = {
   },
   pages: {
     signIn: "/login",
-  }
+  },
+  logger: {
+    error: () => {},
+    warn: () => {},
+    debug: () => {},
+  },
 };
 
 const handler = NextAuth(authOptions);

@@ -2,7 +2,9 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { SPECIALTIES, AVAILABLE_TIME_SLOTS, APPOINTMENT_TYPE_LABELS, APPOINTMENT_TYPES } from '@/constants/appointments';
+import LoadingSpinner from '@/app/components/LoadingSpinner';
 
 export default function AgendarCitaPage() {
   const { data: session, status } = useSession();
@@ -123,7 +125,7 @@ export default function AgendarCitaPage() {
   };
 
   if (status === 'loading') {
-    return <div className="flex justify-center items-center min-h-screen">Cargando...</div>;
+    return <LoadingSpinner size="lg" message="Cargando formulario..." />;
   }
 
   return (
