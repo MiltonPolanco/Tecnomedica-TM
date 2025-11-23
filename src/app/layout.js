@@ -11,15 +11,15 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <main className="max-w-7xl mx-auto p-4">
-          <AppProvider>
-            <Header />
+        <AppProvider>
+          <Header />
+          <main>
             {children}
-            <footer className="border-t p-8 text-center text-gray-500 mt-16">
-              &copy; {new Date().getFullYear()} Tecnomedica
-            </footer>
-          </AppProvider>
-        </main>
+          </main>
+          <footer className="border-t p-8 text-center text-gray-500 mt-16 bg-gray-50">
+            &copy; {new Date().getFullYear()} Tecnomédica. Todos los derechos reservados.
+          </footer>
+        </AppProvider>
       </body>
     </html>
   );
