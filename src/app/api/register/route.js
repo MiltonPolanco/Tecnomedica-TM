@@ -1,19 +1,31 @@
 // /app/api/register/route.js
 import { User } from "@/models/User";
-import mongoose from "mongoose";
+import dbConnect from "@/libs/dbConnect";
+import { NextResponse } from "next/server";
 
 export async function POST(req) {
-  // Leer el cuerpo de la solicitud en formato JSON
-  const body = await req.json();
-
-  // Conectar a la base de datos si aún no se ha conectado.
-  if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(process.env.MONGO_URL, { autoIndex: true });
-    // Forzamos la creación del índice (útil para desarrollo)
-    await User.init();
-  }
-
   try {
+    // Leer el cuerpo de la solicitud en formato JSON
+    const body = await req.json();
+
+    // Validaciones básicas
+    if (!body.email || !body.password) {
+      return NextResponse.json(
+        { error: "Email y contraseña son requeridos" },
+        { status: 400 }
+      );
+    }
+
+    if (body.password.length < 6) {
+      return NextResponse.json(
+        { error: "La contraseña debe tener al menos 6 caracteres" },
+        { status: 400 }
+      );
+    }
+
+    // Conectar a la base de datos
+    await dbConnect();
+
     // Verificar si ya existe un usuario con el mismo email.
     const existingUser = await User.findOne({ email: body.email });
     if (existingUser) {
@@ -27,12 +39,24 @@ export async function POST(req) {
     }
 
     // Crear un nuevo usuario en la base de datos.
-    const createdUser = await User.create(body);
-    return new Response(JSON.stringify(createdUser), {
-      status: 201,
-      headers: { "Content-Type": "application/json" },
+    const createdUser = await User.create({
+      email: body.email,
+      password: body.password,
+      name: body.name || '',
+      role: body.role || 'patient',
     });
+    
+    return NextResponse.json(
+      { 
+        success: true,
+        message: "Usuario creado exitosamente",
+        user: createdUser.toPublicJSON()
+      },
+      { status: 201 }
+    );
   } catch (err) {
+    console.error("Error al crear usuario:", err);
+    
     // Manejo de error si se produce una duplicación (código 11000)
     if (err.code === 11000) {
       return new Response(
@@ -40,10 +64,19 @@ export async function POST(req) {
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
-    console.error("Error al crear usuario:", err);
-    return new Response(
-      JSON.stringify({ error: "Error interno del servidor." }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+    
+    // Errores de validación de Mongoose
+    if (err.name === 'ValidationError') {
+      const errors = Object.values(err.errors).map(e => e.message);
+      return NextResponse.json(
+        { error: "Error de validación", details: errors },
+        { status: 400 }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: "Error interno del servidor. Intenta nuevamente." },
+      { status: 500 }
     );
   }
 }

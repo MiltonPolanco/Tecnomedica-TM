@@ -25,35 +25,46 @@ const authOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        const dbConnect = (await import('@/libs/dbConnect')).default;
+        await dbConnect();
+        
         if (mongoose.connection.readyState === 0) {
           await mongoose.connect(process.env.MONGO_URL);
         }
-        const user = await User.findOne({ email: credentials.email });
+        const user = await User.findOne({ email: credentials.email }).select('+password');
         if (!user) return null;
-        const valid = bcrypt.compareSync(credentials.password, user.password);
+        
+        const valid = await user.comparePassword(credentials.password);
         if (!valid) return null;
+        
         return {
           id:    user._id.toString(),
+          name:  user.name,
           email: user.email,
-          role:  user.role
+          role:  user.role,
+          image: user.image
         };
       }
     })
   ],
 
   callbacks: {
-    // Guardamos id y role en el JWT
+    // Guardamos id, name, y role en el JWT
     async jwt({ token, user }) {
       if (user) {
         token.id   = user.id;
+        token.name = user.name;
         token.role = user.role;
       }
       return token;
     },
-    // Inyectamos id y role en session.user
+    // Inyectamos id, name, y role en session.user
     async session({ session, token }) {
-      session.user.id   = token.id;
-      session.user.role = token.role;
+      if (session?.user) {
+        session.user.id   = token.id;
+        session.user.name = token.name;
+        session.user.role = token.role;
+      }
       return session;
     }
   },
@@ -67,4 +78,4 @@ const authOptions = {
 };
 
 const handler = NextAuth(authOptions);
-export { handler as GET, handler as POST };
+export { handler as GET, handler as POST, authOptions };

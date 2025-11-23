@@ -1,5 +1,6 @@
 // src/app/components/layout/Hero.js
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 
 export default function Hero() {
@@ -13,16 +14,21 @@ export default function Hero() {
           Conecta con médicos especialistas desde la comodidad de tu hogar, sin
           esperas ni desplazamientos.
         </p>
-        <button className="bg-primary hover:bg-blue-600 text-white px-8 py-3 rounded-full font-semibold transition">
+        <Link 
+          href="/agendar-cita"
+          className="inline-block bg-primary hover:bg-blue-600 text-white px-8 py-3 rounded-full font-semibold transition"
+          aria-label="Agendar mi cita médica"
+        >
           Agendar mi cita
-        </button>
+        </Link>
       </div>
       <div className="relative w-full h-64 lg:h-80">
         <Image
           src="/LogoTecnomedica.png"
           fill
-          objectFit="contain"
-          alt="Logo Tecnomedica"
+          style={{ objectFit: "contain" }}
+          alt="Logo Tecnomedica - Plataforma de telemedicina"
+          priority
         />
       </div>
     </section>

@@ -16,9 +16,22 @@ const transporter = nodemailer.createTransport({
 
 export async function POST(request) {
   try {
-    const { name, email, message } = await request.json()
+    const { name, email, message } = await request.json();
 
-    // Opcional: valida aquí los campos...
+    // Validaciones
+    if (!name || !email || !message) {
+      return NextResponse.json(
+        { error: 'Todos los campos son requeridos' },
+        { status: 400 }
+      );
+    }
+
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return NextResponse.json(
+        { error: 'Email inválido' },
+        { status: 400 }
+      );
+    }
 
     // Envía el correo
     await transporter.sendMail({
