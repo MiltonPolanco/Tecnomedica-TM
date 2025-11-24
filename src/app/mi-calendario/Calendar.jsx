@@ -58,6 +58,8 @@ export default function MiCalendarStyled() {
         title: APPOINTMENT_TYPE_LABELS[apt.type] || apt.type,
         time: apt.startTime,
         doctor: apt.doctor?.name || apt.doctor?.email,
+        patient: apt.patient?.name || apt.patient?.email,
+        patientPhone: apt.patient?.phone,
         specialty: apt.specialty,
         status: apt.status,
         reason: apt.reason,
@@ -117,14 +119,20 @@ export default function MiCalendarStyled() {
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-3xl font-semibold">Mi Calendario</h2>
-              <p className="mt-1">Tus citas médicas</p>
+              <p className="mt-1">
+                {session?.user?.role === 'doctor' 
+                  ? 'Citas con tus pacientes' 
+                  : 'Tus citas médicas'}
+              </p>
             </div>
-            <Link
-              href="/agendar-cita"
-              className="bg-white text-blue-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition"
-            >
-              + Nueva Cita
-            </Link>
+            {session?.user?.role !== 'doctor' && (
+              <Link
+                href="/agendar-cita"
+                className="bg-white text-blue-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition"
+              >
+                + Nueva Cita
+              </Link>
+            )}
           </div>
         </div>
 
@@ -256,12 +264,30 @@ export default function MiCalendarStyled() {
                         <p className="font-semibold text-gray-800">
                           {event.time} - {event.title}
                         </p>
-                        <p className="text-sm text-gray-600">
-                          <strong>Doctor:</strong> {event.doctor}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          <strong>Especialidad:</strong> {event.specialty}
-                        </p>
+                        {session?.user?.role === 'doctor' ? (
+                          <>
+                            <p className="text-sm text-gray-600">
+                              <strong>Paciente:</strong> {event.patient}
+                            </p>
+                            {event.patientPhone && (
+                              <p className="text-sm text-gray-600">
+                                <strong>Tel:</strong> {event.patientPhone}
+                              </p>
+                            )}
+                            <p className="text-sm text-gray-600">
+                              <strong>Especialidad:</strong> {event.specialty}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-600">
+                              <strong>Doctor:</strong> {event.doctor}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              <strong>Especialidad:</strong> {event.specialty}
+                            </p>
+                          </>
+                        )}
                         {event.reason && (
                           <p className="text-sm text-gray-600 mt-1">
                             {event.reason}
@@ -286,13 +312,19 @@ export default function MiCalendarStyled() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <p className="text-gray-600 mb-3">No tienes citas este día</p>
-                <Link
-                  href="/agendar-cita"
-                  className="inline-block bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm"
-                >
-                  Agendar cita
-                </Link>
+                <p className="text-gray-600 mb-3">
+                  {session?.user?.role === 'doctor' 
+                    ? 'No tienes citas con pacientes este día' 
+                    : 'No tienes citas este día'}
+                </p>
+                {session?.user?.role !== 'doctor' && (
+                  <Link
+                    href="/agendar-cita"
+                    className="inline-block bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm"
+                  >
+                    Agendar cita
+                  </Link>
+                )}
               </div>
             )}
           </div>

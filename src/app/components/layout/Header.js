@@ -2,7 +2,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Calendar, FileText, User, LogOut } from 'lucide-react';
+import { Menu, X, Calendar, FileText, User, LogOut, Activity, Shield } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Header() {
@@ -76,6 +76,32 @@ export default function Header() {
             </Link>
             {status === 'authenticated' && (
               <>
+                {session?.user?.role === 'admin' && (
+                  <Link 
+                    href={'/admin/usuarios'}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                      isActive('/admin/usuarios') 
+                        ? 'bg-blue-50 text-blue-600' 
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <Shield className="w-4 h-4" />
+                    Admin
+                  </Link>
+                )}
+                {session?.user?.role === 'doctor' && (
+                  <Link 
+                    href={'/dashboard-doctor'}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                      isActive('/dashboard-doctor') 
+                        ? 'bg-blue-50 text-blue-600' 
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <Activity className="w-4 h-4" />
+                    Dashboard
+                  </Link>
+                )}
                 <Link 
                   href={'/mi-calendario'}
                   className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
@@ -196,6 +222,30 @@ export default function Header() {
             </Link>
             {status === 'authenticated' && (
               <>
+                {session?.user?.role === 'admin' && (
+                  <Link 
+                    href={'/admin/usuarios'}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                      isActive('/admin/usuarios') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Shield className="w-4 h-4" />
+                    Admin
+                  </Link>
+                )}
+                {session?.user?.role === 'doctor' && (
+                  <Link 
+                    href={'/dashboard-doctor'}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                      isActive('/dashboard-doctor') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Activity className="w-4 h-4" />
+                    Dashboard
+                  </Link>
+                )}
                 <Link 
                   href={'/mi-calendario'}
                   onClick={() => setMobileMenuOpen(false)}
