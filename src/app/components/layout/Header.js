@@ -2,7 +2,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Calendar, FileText, User, LogOut, Activity, Shield } from 'lucide-react';
+import { Menu, X, Calendar, FileText, User, LogOut, Activity, Shield, Clock } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Header() {
@@ -90,17 +90,30 @@ export default function Header() {
                   </Link>
                 )}
                 {session?.user?.role === 'doctor' && (
-                  <Link 
-                    href={'/dashboard-doctor'}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                      isActive('/dashboard-doctor') 
-                        ? 'bg-blue-50 text-blue-600' 
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                  >
-                    <Activity className="w-4 h-4" />
-                    Dashboard
-                  </Link>
+                  <>
+                    <Link 
+                      href={'/dashboard-doctor'}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                        isActive('/dashboard-doctor') 
+                          ? 'bg-blue-50 text-blue-600' 
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <Activity className="w-4 h-4" />
+                      Dashboard
+                    </Link>
+                    <Link 
+                      href={'/doctor/horarios'}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                        isActive('/doctor/horarios') 
+                          ? 'bg-blue-50 text-blue-600' 
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <Clock className="w-4 h-4" />
+                      Horarios
+                    </Link>
+                  </>
                 )}
                 <Link 
                   href={'/mi-calendario'}
@@ -235,16 +248,28 @@ export default function Header() {
                   </Link>
                 )}
                 {session?.user?.role === 'doctor' && (
-                  <Link 
-                    href={'/dashboard-doctor'}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                      isActive('/dashboard-doctor') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Activity className="w-4 h-4" />
-                    Dashboard
-                  </Link>
+                  <>
+                    <Link 
+                      href={'/dashboard-doctor'}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                        isActive('/dashboard-doctor') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Activity className="w-4 h-4" />
+                      Dashboard
+                    </Link>
+                    <Link 
+                      href={'/doctor/horarios'}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                        isActive('/doctor/horarios') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Clock className="w-4 h-4" />
+                      Horarios
+                    </Link>
+                  </>
                 )}
                 <Link 
                   href={'/mi-calendario'}

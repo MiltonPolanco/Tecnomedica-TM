@@ -21,6 +21,8 @@ export default function AgendarCitaPage() {
   });
   
   const [doctors, setDoctors] = useState([]);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -35,21 +37,35 @@ export default function AgendarCitaPage() {
   useEffect(() => {
     if (formData.specialty) {
       loadDoctors(formData.specialty);
+    } else {
+      setDoctors([]);
+      setFormData(prev => ({ ...prev, doctorId: '', date: '', startTime: '', endTime: '' }));
     }
   }, [formData.specialty]);
 
-  // Auto-calcular endTime cuando se selecciona startTime
+  // Cargar disponibilidad cuando se selecciona doctor y fecha
   useEffect(() => {
-    if (formData.startTime) {
-      const [hour, minute] = formData.startTime.split(':').map(Number);
-      const endHour = hour + (minute === 30 ? 1 : 0);
-      const endMinute = minute === 30 ? '00' : '30';
-      setFormData(prev => ({
-        ...prev,
-        endTime: `${String(endHour).padStart(2, '0')}:${endMinute}`
-      }));
+    if (formData.doctorId && formData.date) {
+      loadAvailability();
+    } else {
+      setAvailableSlots([]);
+      setFormData(prev => ({ ...prev, startTime: '', endTime: '' }));
     }
-  }, [formData.startTime]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.doctorId, formData.date]);
+
+  // Auto-calcular endTime basado en el slot seleccionado
+  useEffect(() => {
+    if (formData.startTime && availableSlots.length > 0) {
+      const selectedSlot = availableSlots.find(slot => slot.startTime === formData.startTime);
+      if (selectedSlot) {
+        setFormData(prev => ({
+          ...prev,
+          endTime: selectedSlot.endTime
+        }));
+      }
+    }
+  }, [formData.startTime, availableSlots]);
 
   const loadDoctors = async (specialty) => {
     try {
@@ -64,6 +80,32 @@ export default function AgendarCitaPage() {
     } catch (err) {
       console.error('Error al cargar doctores:', err);
       setDoctors([]);
+    }
+  };
+
+  const loadAvailability = async () => {
+    setLoadingSlots(true);
+    try {
+      const res = await fetch(`/api/doctor/availability?doctorId=${formData.doctorId}&date=${formData.date}`);
+      const data = await res.json();
+      
+      if (res.ok) {
+        setAvailableSlots(data.availableSlots || []);
+        if (data.availableSlots.length === 0) {
+          setError(data.message || 'No hay horarios disponibles para esta fecha');
+        } else {
+          setError('');
+        }
+      } else {
+        setAvailableSlots([]);
+        setError('Error al cargar disponibilidad');
+      }
+    } catch (err) {
+      console.error('Error al cargar disponibilidad:', err);
+      setAvailableSlots([]);
+      setError('Error de conexión');
+    } finally {
+      setLoadingSlots(false);
     }
   };
 
@@ -232,14 +274,15 @@ export default function AgendarCitaPage() {
                 <input
                   type="date"
                   value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value, startTime: '', endTime: '' })}
                   min={getMinDate()}
                   max={getMaxDate()}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                   required
+                  disabled={!formData.doctorId}
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Disponible hasta 3 meses adelante
+                  {!formData.doctorId ? 'Primero selecciona un doctor' : 'Selecciona la fecha de tu cita'}
                 </p>
               </div>
 
@@ -247,20 +290,50 @@ export default function AgendarCitaPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Hora *
                 </label>
-                <select
-                  value={formData.startTime}
-                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  required
-                >
-                  <option value="">Selecciona una hora</option>
-                  {AVAILABLE_TIME_SLOTS.map((time) => (
-                    <option key={time} value={time}>{time}</option>
-                  ))}
-                </select>
-                {formData.startTime && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    ⏱️ Duración: 30 minutos (hasta {formData.endTime})
+                {loadingSlots ? (
+                  <div className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 flex items-center justify-center">
+                    <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="ml-2 text-gray-600">Cargando horarios...</span>
+                  </div>
+                ) : (
+                  <select
+                    value={formData.startTime}
+                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    required
+                    disabled={!formData.doctorId || !formData.date || availableSlots.length === 0}
+                  >
+                    <option value="">
+                      {!formData.doctorId || !formData.date
+                        ? 'Primero selecciona doctor y fecha'
+                        : availableSlots.length === 0
+                        ? 'No hay horarios disponibles'
+                        : 'Selecciona un horario'}
+                    </option>
+                    {availableSlots.map((slot) => (
+                      <option key={slot.startTime} value={slot.startTime}>
+                        {slot.startTime} - {slot.endTime}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {formData.startTime && formData.endTime && (
+                  <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    ✓ Horario disponible
+                  </p>
+                )}
+                {availableSlots.length === 0 && formData.date && formData.doctorId && !loadingSlots && (
+                  <p className="text-xs text-orange-600 mt-1 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    El doctor no está disponible este día
                   </p>
                 )}
               </div>

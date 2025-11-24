@@ -1,9 +1,12 @@
-// src/app/api/appointments/route.js
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import dbConnect from '@/libs/dbConnect';
 import { Appointment } from '@/models/Appointment';
 import { User } from '@/models/User';
+import '@/models/DoctorSchedule';
+import mongoose from 'mongoose';
+
+const DoctorSchedule = mongoose.models.DoctorSchedule || mongoose.model('DoctorSchedule');
 
 // Importar authOptions
 async function getAuthOptions() {
@@ -127,6 +130,63 @@ export async function POST(req) {
         { error: 'Doctor no válido' },
         { status: 400 }
       );
+    }
+
+    // Verificar disponibilidad del doctor según su horario configurado
+    const schedule = await DoctorSchedule.findOne({ doctor: doctorId });
+    
+    if (schedule) {
+      const appointmentDate = new Date(date);
+      
+      // Verificar si la fecha está bloqueada
+      if (schedule.isDateBlocked(appointmentDate)) {
+        return NextResponse.json(
+          { error: 'El doctor no está disponible en esta fecha' },
+          { status: 400 }
+        );
+      }
+
+      // Verificar si el día de la semana está disponible
+      const dayOfWeek = appointmentDate.getDay();
+      const daySchedule = schedule.weeklySchedule.find(d => d.dayOfWeek === dayOfWeek);
+      
+      if (!daySchedule || !daySchedule.isAvailable) {
+        return NextResponse.json(
+          { error: 'El doctor no atiende este día de la semana' },
+          { status: 400 }
+        );
+      }
+
+      // Verificar que el horario solicitado esté dentro de los slots del doctor
+      const isWithinSlots = daySchedule.timeSlots.some(slot => {
+        return startTime >= slot.startTime && endTime <= slot.endTime;
+      });
+
+      if (!isWithinSlots) {
+        return NextResponse.json(
+          { error: 'El horario solicitado está fuera del horario de atención del doctor' },
+          { status: 400 }
+        );
+      }
+
+      // Verificar límites de reserva anticipada
+      const now = new Date();
+      const minBookingDate = new Date(now.getTime() + schedule.minAdvanceBookingHours * 60 * 60 * 1000);
+      const maxBookingDate = new Date(now.getTime() + schedule.allowBookingDaysInAdvance * 24 * 60 * 60 * 1000);
+
+      if (appointmentDate < minBookingDate) {
+        return NextResponse.json(
+          { error: `Debe reservar con al menos ${schedule.minAdvanceBookingHours} horas de anticipación` },
+          { status: 400 }
+        );
+      }
+
+      if (appointmentDate > maxBookingDate) {
+        return NextResponse.json(
+          { error: `No puede reservar con más de ${schedule.allowBookingDaysInAdvance} días de anticipación` },
+          { status: 400 }
+        );
+      }
     }
 
     // Verificar conflictos de horario
