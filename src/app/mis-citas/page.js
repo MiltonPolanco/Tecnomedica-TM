@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -47,7 +47,7 @@ export default function MisCitasPage() {
     }
   }, [status, router, loadAppointments]);
 
-  const handleCancelAppointment = async () => {
+  const handleCancelAppointment = useCallback(async () => {
     if (!selectedAppointment || !cancelReason.trim()) {
       alert('Por favor indica el motivo de la cancelación');
       return;
@@ -75,9 +75,9 @@ export default function MisCitasPage() {
     } catch (err) {
       alert('Error de conexión');
     }
-  };
+  }, [selectedAppointment, cancelReason, loadAppointments]);
 
-  const getFilteredAppointments = () => {
+  const getFilteredAppointments = useMemo(() => {
     const now = new Date();
     
     return appointments.filter(apt => {
@@ -88,22 +88,20 @@ export default function MisCitasPage() {
       }
       return true;
     });
-  };
+  }, [appointments, filter]);
 
-  const formatDate = (dateString) => {
+  const formatDate = useCallback((dateString) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
-  };
+  }, []);
 
   if (status === 'loading' || loading) {
     return <LoadingSpinner size="lg" message="Cargando tus citas..." />;
   }
-
-  const filteredAppointments = getFilteredAppointments();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-12 px-4">
@@ -160,7 +158,7 @@ export default function MisCitasPage() {
         </div>
 
       {/* Lista de citas */}
-      {filteredAppointments.length === 0 ? (
+      {getFilteredAppointments.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl shadow-lg border border-gray-100">
           <div className="max-w-md mx-auto">
             <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -187,7 +185,7 @@ export default function MisCitasPage() {
         </div>
       ) : (
         <div className="grid gap-6">
-          {filteredAppointments.map((appointment) => (
+          {getFilteredAppointments.map((appointment) => (
             <div
               key={appointment._id}
               className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all transform hover:-translate-y-1"

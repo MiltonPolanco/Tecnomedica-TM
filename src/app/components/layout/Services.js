@@ -1,4 +1,5 @@
 // src/app/components/layout/Services.js
+import { memo } from 'react';
 import { Video, Stethoscope, Clock, Smartphone, FileText, Shield } from "lucide-react";
 
 const items = [
@@ -46,7 +47,7 @@ const items = [
   },
 ];
 
-export default function Services() {
+const Services = memo(function Services() {
   return (
     <section className="py-20 bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -110,4 +111,8 @@ export default function Services() {
       </div>
     </section>
   );
-}
+});
+
+Services.displayName = 'Services';
+
+export default Services;

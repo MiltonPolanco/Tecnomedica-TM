@@ -113,4 +113,8 @@ export default function Hero() {
       </div>
     </section>
   );
-}
+});
+
+Hero.displayName = 'Hero';
+
+export default Hero;

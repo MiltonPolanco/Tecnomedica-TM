@@ -1,4 +1,6 @@
-export default function LoadingSpinner({ size = "md", message = "Cargando..." }) {
+import { memo } from 'react';
+
+const LoadingSpinner = memo(function LoadingSpinner({ size = "md", message = "Cargando..." }) {
   const sizeClasses = {
     sm: "h-4 w-4",
     md: "h-8 w-8",
@@ -11,4 +13,8 @@ export default function LoadingSpinner({ size = "md", message = "Cargando..." })
       {message && <p className="mt-4 text-gray-600">{message}</p>}
     </div>
   );
-}
+});
+
+LoadingSpinner.displayName = 'LoadingSpinner';
+
+export default LoadingSpinner;
