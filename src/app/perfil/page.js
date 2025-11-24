@@ -3,15 +3,51 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Key, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
+
+// Lista de países con códigos telefónicos
+const COUNTRIES = [
+  { code: '+1', country: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
+  { code: '+52', country: 'MX', name: 'México', flag: '🇲🇽' },
+  { code: '+503', country: 'SV', name: 'El Salvador', flag: '🇸🇻' },
+  { code: '+502', country: 'GT', name: 'Guatemala', flag: '🇬🇹' },
+  { code: '+504', country: 'HN', name: 'Honduras', flag: '🇭🇳' },
+  { code: '+505', country: 'NI', name: 'Nicaragua', flag: '🇳🇮' },
+  { code: '+506', country: 'CR', name: 'Costa Rica', flag: '🇨🇷' },
+  { code: '+507', country: 'PA', name: 'Panamá', flag: '🇵🇦' },
+  { code: '+57', country: 'CO', name: 'Colombia', flag: '🇨🇴' },
+  { code: '+58', country: 'VE', name: 'Venezuela', flag: '🇻🇪' },
+  { code: '+593', country: 'EC', name: 'Ecuador', flag: '🇪🇨' },
+  { code: '+51', country: 'PE', name: 'Perú', flag: '🇵🇪' },
+  { code: '+591', country: 'BO', name: 'Bolivia', flag: '🇧🇴' },
+  { code: '+56', country: 'CL', name: 'Chile', flag: '🇨🇱' },
+  { code: '+54', country: 'AR', name: 'Argentina', flag: '🇦🇷' },
+  { code: '+598', country: 'UY', name: 'Uruguay', flag: '🇺🇾' },
+  { code: '+595', country: 'PY', name: 'Paraguay', flag: '🇵🇾' },
+  { code: '+55', country: 'BR', name: 'Brasil', flag: '🇧🇷' },
+  { code: '+34', country: 'ES', name: 'España', flag: '🇪🇸' },
+];
 
 export default function PerfilPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    phoneCountry: '+503', // El Salvador por defecto
     bloodType: '',
+  });
+
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
   });
 
   useEffect(() => {
@@ -22,13 +58,39 @@ export default function PerfilPage() {
 
   useEffect(() => {
     if (session?.user) {
+      // Extraer código de país si existe en el teléfono
+      let phoneNumber = session.user.phone || '';
+      let countryCode = '+503'; // Default
+      
+      if (phoneNumber) {
+        // Buscar si el teléfono comienza con algún código de país
+        const matchedCountry = COUNTRIES.find(c => phoneNumber.startsWith(c.code));
+        if (matchedCountry) {
+          countryCode = matchedCountry.code;
+          phoneNumber = phoneNumber.substring(matchedCountry.code.length).trim();
+        }
+      }
+      
       setFormData({
         name: session.user.name || '',
-        phone: session.user.phone || '',
+        phone: phoneNumber,
+        phoneCountry: countryCode,
         bloodType: session.user.bloodType || '',
       });
     }
-  }, [session]);
+  }, [session?.user]);
+
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showCountryDropdown && !event.target.closest('.country-selector')) {
+        setShowCountryDropdown(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showCountryDropdown]);
 
   if (status === 'loading') {
     return (
@@ -44,9 +106,80 @@ export default function PerfilPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implementar actualización de perfil
-    alert('Función de actualización de perfil en desarrollo');
-    setIsEditing(false);
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      // Combinar código de país con número de teléfono
+      const fullPhone = formData.phone ? `${formData.phoneCountry} ${formData.phone}` : '';
+      
+      const res = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          phone: fullPhone,
+          bloodType: formData.bloodType,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage({ type: 'success', text: 'Perfil actualizado exitosamente' });
+        setIsEditing(false);
+        
+        // Actualizar sesión con los nuevos datos
+        await update({
+          user: {
+            name: data.user.name,
+            phone: data.user.phone,
+            bloodType: data.user.bloodType,
+          },
+        });
+
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Error al actualizar perfil' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Error de conexión' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const res = await fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(passwordData),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage({ type: 'success', text: 'Contraseña actualizada exitosamente' });
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+        });
+        setShowPasswordModal(false);
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Error al cambiar contraseña' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Error de conexión' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,21 +188,49 @@ export default function PerfilPage() {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Header with gradient */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <h1 className="text-3xl font-bold text-white">Mi Perfil</h1>
               {!isEditing && (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2 bg-white text-blue-600 px-6 py-2.5 rounded-xl font-semibold hover:bg-blue-50 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Editar Perfil
-                </button>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => setShowPasswordModal(true)}
+                    className="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 py-2 rounded-lg transition-all border border-white/30"
+                  >
+                    <Key className="w-4 h-4" />
+                    <span className="hidden sm:inline">Cambiar Contraseña</span>
+                    <span className="sm:hidden">Contraseña</span>
+                  </button>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-2 bg-white text-blue-600 px-6 py-2.5 rounded-xl font-semibold hover:bg-blue-50 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Editar Perfil
+                  </button>
+                </div>
               )}
             </div>
           </div>
+
+          {/* Mensajes */}
+          {message.text && (
+            <div className={`mx-8 mt-6 p-4 rounded-xl border-l-4 flex items-start gap-3 ${
+              message.type === 'success' 
+                ? 'bg-green-50 border-green-500' 
+                : 'bg-red-50 border-red-500'
+            }`}>
+              {message.type === 'success' ? (
+                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              )}
+              <p className={`font-medium ${message.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
+                {message.text}
+              </p>
+            </div>
+          )}
 
           <div className="p-8">
             {/* Avatar / Información básica */}
@@ -115,13 +276,58 @@ export default function PerfilPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Teléfono
                     </label>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="+1 234 567 8900"
-                    />
+                    <div className="flex gap-2">
+                      {/* Selector de País */}
+                      <div className="relative country-selector">
+                        <button
+                          type="button"
+                          onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                          className="h-full px-3 py-3 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all flex items-center gap-2 min-w-[120px]"
+                        >
+                          <span className="text-xl">
+                            {COUNTRIES.find(c => c.code === formData.phoneCountry)?.flag}
+                          </span>
+                          <span className="font-medium text-gray-700">
+                            {formData.phoneCountry}
+                          </span>
+                          <ChevronDown className="w-4 h-4 text-gray-500" />
+                        </button>
+                        
+                        {/* Dropdown de países */}
+                        {showCountryDropdown && (
+                          <div className="absolute z-50 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 max-h-80 overflow-y-auto">
+                            {COUNTRIES.map((country) => (
+                              <button
+                                key={country.code}
+                                type="button"
+                                onClick={() => {
+                                  setFormData({ ...formData, phoneCountry: country.code });
+                                  setShowCountryDropdown(false);
+                                }}
+                                className={`w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors flex items-center gap-3 ${
+                                  formData.phoneCountry === country.code ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+                                }`}
+                              >
+                                <span className="text-2xl">{country.flag}</span>
+                                <div className="flex-1">
+                                  <div className="font-medium text-gray-900">{country.name}</div>
+                                  <div className="text-sm text-gray-500">{country.code}</div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Input de número */}
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/[^\d\s-]/g, '') })}
+                        className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="1234 5678"
+                      />
+                    </div>
                   </div>
 
                   {session.user.role === 'patient' && (
@@ -151,17 +357,34 @@ export default function PerfilPage() {
                 <div className="flex gap-4 pt-4">
                   <button
                     type="submit"
-                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
+                    disabled={loading}
+                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Guardar Cambios
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Guardar Cambios
+                      </>
+                    )}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsEditing(false)}
-                    className="bg-white border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-400 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setMessage({ type: '', text: '' });
+                    }}
+                    disabled={loading}
+                    className="bg-white border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-400 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-50"
                   >
                     Cancelar
                   </button>
@@ -188,7 +411,7 @@ export default function PerfilPage() {
                     <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
                       Teléfono
                     </label>
-                    <p className="text-lg font-semibold text-gray-900">{formData.phone || 'No especificado'}</p>
+                    <p className="text-lg font-semibold text-gray-900">{session.user.phone || 'No especificado'}</p>
                   </div>
 
                   {session.user.role === 'patient' && (
@@ -196,7 +419,7 @@ export default function PerfilPage() {
                       <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
                         Tipo de sangre
                       </label>
-                      <p className="text-lg font-semibold text-gray-900">{formData.bloodType || 'No especificado'}</p>
+                      <p className="text-lg font-semibold text-gray-900">{session.user.bloodType || 'No especificado'}</p>
                     </div>
                   )}
 
@@ -281,6 +504,110 @@ export default function PerfilPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Cambio de Contraseña */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl transform transition-all">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Key className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Cambiar Contraseña</h3>
+              <p className="text-gray-600">
+                Ingresa tu contraseña actual y la nueva contraseña
+              </p>
+            </div>
+
+            <form onSubmit={handlePasswordChange} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contraseña Actual
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nueva Contraseña
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  required
+                  minLength={6}
+                  disabled={loading}
+                />
+                <p className="text-xs text-gray-500 mt-1">Mínimo 6 caracteres</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirmar Nueva Contraseña
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Actualizando...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Cambiar Contraseña
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                    setPasswordData({
+                      currentPassword: '',
+                      newPassword: '',
+                      confirmPassword: '',
+                    });
+                    setMessage({ type: '', text: '' });
+                  }}
+                  disabled={loading}
+                  className="flex-1 bg-white border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-400 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

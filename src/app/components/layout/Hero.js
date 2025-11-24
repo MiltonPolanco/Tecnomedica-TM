@@ -1,9 +1,10 @@
 // src/app/components/layout/Hero.js
-import Image from "next/image";
+import { memo } from 'react';
 import Link from "next/link";
-import { Calendar, Video, Clock, Shield } from "lucide-react";
+import Image from "next/image";
+import { Calendar, Video, Shield, Heart, ArrowRight } from "lucide-react";
 
-export default function Hero() {
+const Hero = memo(function Hero() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-50">
       {/* Background decoration */}

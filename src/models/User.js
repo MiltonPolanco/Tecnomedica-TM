@@ -41,9 +41,13 @@ const UserSchema = new Schema({
     type: String,
     trim: true,
   },
+  bloodType: {
+    type: String,
+    enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', ''],
+    default: '',
+  },
   // Información médica (para pacientes)
   medicalInfo: {
-    bloodType: String,
     allergies: [String],
     chronicConditions: [String],
   },

@@ -39,9 +39,12 @@ const authOptions = {
         
         return {
           id:    user._id.toString(),
-          name:  user.name,
+          name:  user.name || '',
           email: user.email,
           role:  user.role,
+          phone: user.phone || '',
+          bloodType: user.bloodType || '',
+          createdAt: user.createdAt,
           image: user.image
         };
       }
@@ -49,21 +52,35 @@ const authOptions = {
   ],
 
   callbacks: {
-    // Guardamos id, name, y role en el JWT
-    async jwt({ token, user }) {
+    // Guardamos datos del usuario en el JWT
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id   = user.id;
         token.name = user.name;
         token.role = user.role;
+        token.phone = user.phone;
+        token.bloodType = user.bloodType;
+        token.createdAt = user.createdAt;
       }
+      
+      // Cuando se llama update() desde el cliente, actualizamos el token
+      if (trigger === "update" && session) {
+        token.name = session.user.name || token.name;
+        token.phone = session.user.phone || token.phone;
+        token.bloodType = session.user.bloodType || token.bloodType;
+      }
+      
       return token;
     },
-    // Inyectamos id, name, y role en session.user
+    // Inyectamos datos en session.user
     async session({ session, token }) {
       if (session?.user) {
         session.user.id   = token.id;
         session.user.name = token.name;
         session.user.role = token.role;
+        session.user.phone = token.phone;
+        session.user.bloodType = token.bloodType;
+        session.user.createdAt = token.createdAt;
       }
       return session;
     }
