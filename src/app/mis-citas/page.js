@@ -535,6 +535,18 @@ export default function MisCitasPage() {
                         </button>
                       )}
                       
+                      {appointment.status === 'completed' && (
+                        <Link
+                          href={`/doctor/historiales/nuevo?appointmentId=${appointment._id}&patientId=${appointment.patient._id}`}
+                          className="flex items-center justify-center gap-2 px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+                        >
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Crear Historial
+                        </Link>
+                      )}
+                      
                       {(appointment.status === 'scheduled' || appointment.status === 'confirmed') && (
                         <button
                           onClick={() => {

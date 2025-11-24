@@ -2,7 +2,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Calendar, FileText, User, LogOut, Activity, Shield, Clock } from 'lucide-react';
+import { Menu, X, Calendar, FileText, User, LogOut, Activity, Shield, Clock, Clipboard } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Header() {
@@ -118,6 +118,17 @@ export default function Header() {
                       Horarios
                     </Link>
                     <Link 
+                      href={'/doctor/historiales'}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                        isActive('/doctor/historiales') 
+                          ? 'bg-blue-50 text-blue-600' 
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <Clipboard className="w-4 h-4" />
+                      Historiales
+                    </Link>
+                    <Link 
                       href={'/mi-calendario'}
                       className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
                         isActive('/mi-calendario') 
@@ -164,6 +175,17 @@ export default function Header() {
                     >
                       <Calendar className="w-4 h-4" />
                       Calendario
+                    </Link>
+                    <Link 
+                      href={'/mi-historial'}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                        isActive('/mi-historial') 
+                          ? 'bg-blue-50 text-blue-600' 
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <Clipboard className="w-4 h-4" />
+                      Mi Historial
                     </Link>
                     <Link 
                       href={'/mis-citas'}
@@ -315,6 +337,16 @@ export default function Header() {
                       Horarios
                     </Link>
                     <Link 
+                      href={'/doctor/historiales'}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                        isActive('/doctor/historiales') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Clipboard className="w-4 h-4" />
+                      Historiales
+                    </Link>
+                    <Link 
                       href={'/mi-calendario'}
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
@@ -357,6 +389,16 @@ export default function Header() {
                     >
                       <Calendar className="w-4 h-4" />
                       Calendario
+                    </Link>
+                    <Link 
+                      href={'/mi-historial'}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                        isActive('/mi-historial') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Clipboard className="w-4 h-4" />
+                      Mi Historial
                     </Link>
                     <Link 
                       href={'/mis-citas'}
