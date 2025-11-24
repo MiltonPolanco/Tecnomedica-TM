@@ -86,8 +86,7 @@ UserSchema.pre("save", async function (next) {
   }
 });
 
-// Método para comparar contraseñas
-UserSchema.methods.comparePassword = async function (candidatePassword) {
+UserSchema.methods.comparePassword = async function(candidatePassword) {
   try {
     return await bcrypt.compare(candidatePassword, this.password);
   } catch (error) {

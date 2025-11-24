@@ -123,14 +123,14 @@ export default function DoctorSchedulePage() {
       });
 
       if (res.ok) {
-        alert('Horarios guardados exitosamente');
+        alert('✅ Horarios guardados exitosamente.\n\nLos pacientes ahora verán tu disponibilidad actualizada al momento de agendar citas.');
         loadSchedule();
       } else {
-        alert('Error al guardar horarios');
+        alert('❌ Error al guardar horarios. Por favor intenta nuevamente.');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al guardar horarios');
+      alert('❌ Error al guardar horarios. Verifica tu conexión e intenta nuevamente.');
     } finally {
       setSaving(false);
     }
@@ -150,12 +150,12 @@ export default function DoctorSchedulePage() {
       });
 
       if (res.ok) {
-        alert('Fecha bloqueada exitosamente');
+        alert('✅ Fecha bloqueada exitosamente.\n\nLos pacientes no podrán agendar citas en esta fecha.');
         setBlockedDate('');
         setBlockedReason('');
         loadSchedule();
       } else {
-        alert('Error al bloquear fecha');
+        alert('❌ Error al bloquear fecha');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -164,7 +164,7 @@ export default function DoctorSchedulePage() {
   };
 
   const handleRemoveBlockedDate = async (dateId) => {
-    const confirmRemove = confirm('¿Desbloquear esta fecha?');
+    const confirmRemove = confirm('¿Desbloquear esta fecha?\n\nLos pacientes podrán volver a agendar citas en este día.');
     if (!confirmRemove) return;
 
     try {
@@ -173,14 +173,14 @@ export default function DoctorSchedulePage() {
       });
 
       if (res.ok) {
-        alert('Fecha desbloqueada exitosamente');
+        alert('✅ Fecha desbloqueada exitosamente');
         loadSchedule();
       } else {
-        alert('Error al desbloquear fecha');
+        alert('❌ Error al desbloquear fecha');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al desbloquear fecha');
+      alert('❌ Error al desbloquear fecha');
     }
   };
 
@@ -208,6 +208,23 @@ export default function DoctorSchedulePage() {
           <p className="text-gray-600 mt-2">Gestiona tu disponibilidad y horarios de atención</p>
         </div>
 
+        {/* Guía de Ayuda */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            ¿Cómo funciona esta configuración?
+          </h3>
+          <ul className="text-sm text-blue-800 space-y-1 ml-7">
+            <li>• <strong>Duración de Consulta:</strong> Define cuántos minutos dura cada cita (ej: 30 min = slots cada 30 minutos)</li>
+            <li>• <strong>Reserva con anticipación:</strong> Máximo de días futuros que los pacientes pueden agendar</li>
+            <li>• <strong>Tiempo mínimo de aviso:</strong> Horas mínimas antes de la cita para poder agendarla</li>
+            <li>• <strong>Horarios Semanales:</strong> Activa los días que trabajas y define tus horarios (puedes tener varios bloques por día)</li>
+            <li>• <strong>Fechas Bloqueadas:</strong> Bloquea días específicos para vacaciones, conferencias, etc.</li>
+          </ul>
+        </div>
+
         {/* Configuración General */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -229,6 +246,9 @@ export default function DoctorSchedulePage() {
                 onChange={(e) => setSchedule(prev => ({ ...prev, consultationDuration: parseInt(e.target.value) }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Ej: 30 min = slots de 9:00-9:30, 9:30-10:00, etc.
+              </p>
             </div>
 
             <div>
@@ -243,6 +263,9 @@ export default function DoctorSchedulePage() {
                 onChange={(e) => setSchedule(prev => ({ ...prev, allowBookingDaysInAdvance: parseInt(e.target.value) }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Pacientes pueden agendar hasta {schedule.allowBookingDaysInAdvance} días adelante
+              </p>
             </div>
 
             <div>
@@ -257,16 +280,22 @@ export default function DoctorSchedulePage() {
                 onChange={(e) => setSchedule(prev => ({ ...prev, minAdvanceBookingHours: parseInt(e.target.value) }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Citas deben agendarse con {schedule.minAdvanceBookingHours}h de anticipación
+              </p>
             </div>
           </div>
         </div>
 
         {/* Horarios Semanales */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-blue-600" />
             Horarios Semanales
           </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Activa los días que trabajas y agrega los bloques de horario. Ejemplo: Lunes 9:00-12:00 y 14:00-18:00 (dos bloques).
+          </p>
 
           <div className="space-y-4">
             {DAYS_OF_WEEK.map(({ value, label }) => {
@@ -335,7 +364,11 @@ export default function DoctorSchedulePage() {
 
         {/* Fechas Bloqueadas */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Fechas Bloqueadas</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Fechas Bloqueadas</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Bloquea días específicos donde no estarás disponible (vacaciones, días feriados, conferencias, etc.). 
+            Los pacientes no podrán agendar citas en estas fechas.
+          </p>
           
           <div className="grid md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -375,7 +408,6 @@ export default function DoctorSchedulePage() {
             <div className="mt-4 space-y-2">
               <h3 className="font-medium text-gray-900">Fechas Bloqueadas:</h3>
               {schedule.blockedDates.map((blocked) => {
-                // Crear fecha en hora local para evitar desfase por UTC
                 const date = new Date(blocked.date);
                 const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
                 

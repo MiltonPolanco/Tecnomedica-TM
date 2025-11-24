@@ -14,7 +14,6 @@ async function dbConnect() {
   return mongoose.connect(process.env.MONGO_URL);
 }
 
-// GET - Obtener disponibilidad de un doctor para una fecha específica
 export async function GET(req) {
   try {
     await dbConnect();
@@ -27,17 +26,15 @@ export async function GET(req) {
       return Response.json({ error: 'Doctor ID y fecha son requeridos' }, { status: 400 });
     }
 
-    // Obtener horario del doctor
     let schedule = await DoctorSchedule.findOne({ doctor: doctorId });
 
     if (!schedule) {
-      // Crear horario por defecto si no existe
       schedule = await DoctorSchedule.createDefaultSchedule(doctorId);
     }
 
-    const targetDate = new Date(date);
-    // Normalizar a medianoche en hora local
-    targetDate.setHours(0, 0, 0, 0);
+    // Crear fecha en hora local correctamente (YYYY-MM-DD)
+    const [year, month, day] = date.split('-').map(Number);
+    const targetDate = new Date(year, month - 1, day, 12, 0, 0);
     const dayOfWeek = targetDate.getDay();
 
     // Verificar si el día está disponible
@@ -73,7 +70,6 @@ export async function GET(req) {
       status: { $in: ['scheduled', 'confirmed', 'in-progress'] },
     }).select('startTime endTime').lean();
 
-    // Generar todos los slots posibles del día
     const availableSlots = [];
     const consultationDuration = schedule.consultationDuration;
 

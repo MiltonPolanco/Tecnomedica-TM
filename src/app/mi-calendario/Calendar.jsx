@@ -42,12 +42,13 @@ export default function MiCalendarStyled() {
     }
   }, [status, loadAppointments]);
 
-  // Convertir citas a formato de eventos para el calendario
   const events = useMemo(() => {
     const eventsMap = {};
     
     appointments.forEach(apt => {
-      const dateKey = new Date(apt.date).toISOString().split('T')[0];
+      const aptDate = new Date(apt.date);
+      const localDate = new Date(aptDate.getTime() + aptDate.getTimezoneOffset() * 60000);
+      const dateKey = localDate.toISOString().split('T')[0];
       
       if (!eventsMap[dateKey]) {
         eventsMap[dateKey] = [];
@@ -69,9 +70,11 @@ export default function MiCalendarStyled() {
     return eventsMap;
   }, [appointments]);
 
-  // Obtener eventos del día seleccionado
   const selectedDateEvents = useMemo(() => {
-    const dateKey = date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateKey = `${year}-${month}-${day}`;
     return events[dateKey] || [];
   }, [date, events]);
 

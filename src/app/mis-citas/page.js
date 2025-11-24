@@ -120,12 +120,15 @@ export default function MisCitasPage() {
     now.setHours(0, 0, 0, 0);
     
     return appointments.filter(apt => {
-      // Filtro por tiempo
       let timeMatch = true;
       if (filter === 'upcoming') {
-        timeMatch = new Date(apt.date) >= now && apt.status !== 'cancelled' && apt.status !== 'completed';
+        const aptDate = new Date(apt.date);
+        aptDate.setHours(0, 0, 0, 0);
+        timeMatch = aptDate >= now && apt.status !== 'cancelled' && apt.status !== 'completed';
       } else if (filter === 'past') {
-        timeMatch = new Date(apt.date) < now || apt.status === 'completed';
+        const aptDate = new Date(apt.date);
+        aptDate.setHours(0, 0, 0, 0);
+        timeMatch = aptDate < now || apt.status === 'completed';
       } else if (filter === 'cancelled') {
         timeMatch = apt.status === 'cancelled';
       } else if (filter === 'completed') {
@@ -143,7 +146,10 @@ export default function MisCitasPage() {
   }, [appointments, filter, statusFilter]);
 
   const formatDate = useCallback((dateString) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    const date = new Date(dateString);
+    // Compensar offset de zona horaria para mostrar fecha correcta
+    const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+    return localDate.toLocaleDateString('es-ES', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',

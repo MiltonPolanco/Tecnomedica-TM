@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/libs/dbConnect';
 import { User } from '@/models/User';
 
-// GET - Obtener lista de doctores disponibles
 export async function GET(req) {
   try {
     await dbConnect();

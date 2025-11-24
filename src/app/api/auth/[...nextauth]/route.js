@@ -21,7 +21,7 @@ const authOptions = {
       name: "Credentials",
       id: "credentials",
       credentials: {
-        email:    { label: "Email",    type: "email",    placeholder: "you@example.com" },
+        email:    { label: "Email",    type: "email",    placeholder: "correo@ejemplo.com" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {

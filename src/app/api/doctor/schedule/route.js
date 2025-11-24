@@ -12,7 +12,6 @@ async function dbConnect() {
   return mongoose.connect(process.env.MONGO_URL);
 }
 
-// GET - Obtener horarios del doctor
 export async function GET(req) {
   try {
     const session = await getServerSession(authOptions);
@@ -30,7 +29,6 @@ export async function GET(req) {
 
     let schedule = await DoctorSchedule.findOne({ doctor: doctor._id });
 
-    // Si no existe horario, crear uno por defecto
     if (!schedule) {
       schedule = await DoctorSchedule.createDefaultSchedule(doctor._id);
     }
@@ -42,7 +40,6 @@ export async function GET(req) {
   }
 }
 
-// PUT - Actualizar horarios del doctor
 export async function PUT(req) {
   try {
     const session = await getServerSession(authOptions);

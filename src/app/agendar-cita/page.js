@@ -153,17 +153,21 @@ export default function AgendarCitaPage() {
     }
   };
 
-  // Obtener fecha mínima (hoy)
   const getMinDate = () => {
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
-  // Obtener fecha máxima (3 meses adelante)
   const getMaxDate = () => {
     const maxDate = new Date();
     maxDate.setMonth(maxDate.getMonth() + 3);
-    return maxDate.toISOString().split('T')[0];
+    const year = maxDate.getFullYear();
+    const month = String(maxDate.getMonth() + 1).padStart(2, '0');
+    const day = String(maxDate.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   if (status === 'loading') {

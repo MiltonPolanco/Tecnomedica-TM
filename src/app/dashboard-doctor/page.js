@@ -211,11 +211,15 @@ export default function DashboardDoctorPage() {
                               <div className="flex items-center gap-4 text-sm">
                                 <span className="flex items-center gap-1 text-gray-600">
                                   <Calendar className="w-4 h-4" />
-                                  {new Date(appointment.date).toLocaleDateString('es-ES', {
-                                    weekday: 'short',
-                                    day: 'numeric',
-                                    month: 'short',
-                                  })}
+                                  {(() => {
+                                    const date = new Date(appointment.date);
+                                    const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+                                    return localDate.toLocaleDateString('es-ES', {
+                                      weekday: 'short',
+                                      day: 'numeric',
+                                      month: 'short',
+                                    });
+                                  })()}
                                 </span>
                                 <span className="flex items-center gap-1 text-gray-600">
                                   <Clock className="w-4 h-4" />

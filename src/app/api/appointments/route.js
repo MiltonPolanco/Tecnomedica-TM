@@ -15,7 +15,6 @@ async function getAuthOptions() {
   return authModule.authOptions || {};
 }
 
-// GET - Obtener citas del usuario
 export async function GET(req) {
   try {
     const authOptions = await getAuthOptions();
@@ -32,7 +31,6 @@ export async function GET(req) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    // Buscar el usuario completo para obtener su ID y rol
     const user = await User.findOne({ email: session.user.email })
       .select('_id role')
       .lean();
@@ -88,7 +86,6 @@ export async function GET(req) {
   }
 }
 
-// POST - Crear nueva cita
 export async function POST(req) {
   try {
     const authOptions = await getAuthOptions();
@@ -132,12 +129,14 @@ export async function POST(req) {
       );
     }
 
+    // Crear fecha en hora local correctamente (YYYY-MM-DD) - antes de las validaciones
+    const [year, month, day] = date.split('-').map(Number);
+    const appointmentDate = new Date(year, month - 1, day, 12, 0, 0);
+
     // Verificar disponibilidad del doctor según su horario configurado
     const schedule = await DoctorSchedule.findOne({ doctor: doctorId });
     
     if (schedule) {
-      const appointmentDate = new Date(date);
-      
       // Verificar si la fecha está bloqueada
       if (schedule.isDateBlocked(appointmentDate)) {
         return NextResponse.json(
@@ -189,10 +188,10 @@ export async function POST(req) {
       }
     }
 
-    // Verificar conflictos de horario
+    // Verificar conflictos de horario (usar la misma fecha ya creada)
     const hasConflict = await Appointment.checkConflict(
       doctorId,
-      new Date(date),
+      appointmentDate,
       startTime,
       endTime
     );
@@ -204,11 +203,11 @@ export async function POST(req) {
       );
     }
 
-    // Crear cita
+    // Crear cita (usar fecha local ya creada)
     const appointment = await Appointment.create({
       patient: patient._id,
       doctor: doctorId,
-      date: new Date(date),
+      date: appointmentDate,
       startTime,
       endTime,
       type: type || 'consultation',

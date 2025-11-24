@@ -12,7 +12,6 @@ async function dbConnect() {
   return mongoose.connect(process.env.MONGO_URL);
 }
 
-// GET - Obtener estadísticas del doctor
 export async function GET(req) {
   try {
     const session = await getServerSession(authOptions);

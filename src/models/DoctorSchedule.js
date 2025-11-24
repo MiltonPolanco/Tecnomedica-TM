@@ -63,17 +63,13 @@ const DoctorScheduleSchema = new Schema({
   timestamps: true,
 });
 
-// Índices para búsquedas eficientes
-DoctorScheduleSchema.index({ doctor: 1 });
 DoctorScheduleSchema.index({ 'blockedDates.date': 1 });
 
-// Método para verificar si un día está disponible
 DoctorScheduleSchema.methods.isDayAvailable = function(dayOfWeek) {
   const daySchedule = this.weeklySchedule.find(day => day.dayOfWeek === dayOfWeek);
   return daySchedule ? daySchedule.isAvailable : false;
 };
 
-// Método para obtener horarios disponibles de un día
 DoctorScheduleSchema.methods.getAvailableTimeSlotsForDay = function(dayOfWeek) {
   const daySchedule = this.weeklySchedule.find(day => day.dayOfWeek === dayOfWeek);
   if (!daySchedule || !daySchedule.isAvailable) {
@@ -82,7 +78,6 @@ DoctorScheduleSchema.methods.getAvailableTimeSlotsForDay = function(dayOfWeek) {
   return daySchedule.timeSlots;
 };
 
-// Método para verificar si una fecha está bloqueada
 DoctorScheduleSchema.methods.isDateBlocked = function(date) {
   // Normalizar la fecha de entrada a medianoche en hora local
   const checkDate = new Date(date);
@@ -97,7 +92,6 @@ DoctorScheduleSchema.methods.isDateBlocked = function(date) {
   });
 };
 
-// Método estático para generar horarios predeterminados
 DoctorScheduleSchema.statics.createDefaultSchedule = async function(doctorId) {
   const defaultSchedule = {
     doctor: doctorId,

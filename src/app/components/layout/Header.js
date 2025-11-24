@@ -44,36 +44,40 @@ export default function Header() {
             >
               Inicio
             </Link>
-            <Link 
-              href={'/servicios'}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                isActive('/servicios') 
-                  ? 'bg-blue-50 text-blue-600' 
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              Servicios
-            </Link>
-            <Link 
-              href={'/sobre-nosotros'}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                isActive('/sobre-nosotros') 
-                  ? 'bg-blue-50 text-blue-600' 
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              Nosotros
-            </Link>
-            <Link 
-              href={'/contactanos'}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                isActive('/contactanos') 
-                  ? 'bg-blue-50 text-blue-600' 
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              Contacto
-            </Link>
+            {status !== 'authenticated' && (
+              <>
+                <Link 
+                  href={'/servicios'}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    isActive('/servicios') 
+                      ? 'bg-blue-50 text-blue-600' 
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  Servicios
+                </Link>
+                <Link 
+                  href={'/sobre-nosotros'}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    isActive('/sobre-nosotros') 
+                      ? 'bg-blue-50 text-blue-600' 
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  Nosotros
+                </Link>
+                <Link 
+                  href={'/contactanos'}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    isActive('/contactanos') 
+                      ? 'bg-blue-50 text-blue-600' 
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  Contacto
+                </Link>
+              </>
+            )}
             {status === 'authenticated' && (
               <>
                 {session?.user?.role === 'admin' && (
@@ -113,30 +117,67 @@ export default function Header() {
                       <Clock className="w-4 h-4" />
                       Horarios
                     </Link>
+                    <Link 
+                      href={'/mi-calendario'}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                        isActive('/mi-calendario') 
+                          ? 'bg-blue-50 text-blue-600' 
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Calendario
+                    </Link>
+                    <Link 
+                      href={'/mis-citas'}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                        isActive('/mis-citas') 
+                          ? 'bg-blue-50 text-blue-600' 
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4" />
+                      Mis Citas
+                    </Link>
                   </>
                 )}
-                <Link 
-                  href={'/mi-calendario'}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                    isActive('/mi-calendario') 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <Calendar className="w-4 h-4" />
-                  Calendario
-                </Link>
-                <Link 
-                  href={'/mis-citas'}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                    isActive('/mis-citas') 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <FileText className="w-4 h-4" />
-                  Mis Citas
-                </Link>
+                {session?.user?.role === 'patient' && (
+                  <>
+                    <Link 
+                      href={'/agendar-cita'}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                        isActive('/agendar-cita') 
+                          ? 'bg-blue-50 text-blue-600' 
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Agendar Cita
+                    </Link>
+                    <Link 
+                      href={'/mi-calendario'}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                        isActive('/mi-calendario') 
+                          ? 'bg-blue-50 text-blue-600' 
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Calendario
+                    </Link>
+                    <Link 
+                      href={'/mis-citas'}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                        isActive('/mis-citas') 
+                          ? 'bg-blue-50 text-blue-600' 
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4" />
+                      Mis Citas
+                    </Link>
+                  </>
+                )}
               </>
             )}
           </nav>
@@ -206,33 +247,37 @@ export default function Header() {
             >
               Inicio
             </Link>
-            <Link 
-              href={'/servicios'}
-              onClick={() => setMobileMenuOpen(false)}
-              className={`block px-4 py-2 rounded-lg font-medium ${
-                isActive('/servicios') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              Servicios
-            </Link>
-            <Link 
-              href={'/sobre-nosotros'}
-              onClick={() => setMobileMenuOpen(false)}
-              className={`block px-4 py-2 rounded-lg font-medium ${
-                isActive('/sobre-nosotros') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              Nosotros
-            </Link>
-            <Link 
-              href={'/contactanos'}
-              onClick={() => setMobileMenuOpen(false)}
-              className={`block px-4 py-2 rounded-lg font-medium ${
-                isActive('/contactanos') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              Contacto
-            </Link>
+            {status !== 'authenticated' && (
+              <>
+                <Link 
+                  href={'/servicios'}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-4 py-2 rounded-lg font-medium ${
+                    isActive('/servicios') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  Servicios
+                </Link>
+                <Link 
+                  href={'/sobre-nosotros'}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-4 py-2 rounded-lg font-medium ${
+                    isActive('/sobre-nosotros') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  Nosotros
+                </Link>
+                <Link 
+                  href={'/contactanos'}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-4 py-2 rounded-lg font-medium ${
+                    isActive('/contactanos') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  Contacto
+                </Link>
+              </>
+            )}
             {status === 'authenticated' && (
               <>
                 {session?.user?.role === 'admin' && (
@@ -269,28 +314,62 @@ export default function Header() {
                       <Clock className="w-4 h-4" />
                       Horarios
                     </Link>
+                    <Link 
+                      href={'/mi-calendario'}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                        isActive('/mi-calendario') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Calendario
+                    </Link>
+                    <Link 
+                      href={'/mis-citas'}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                        isActive('/mis-citas') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4" />
+                      Mis Citas
+                    </Link>
                   </>
                 )}
-                <Link 
-                  href={'/mi-calendario'}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                    isActive('/mi-calendario') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <Calendar className="w-4 h-4" />
-                  Calendario
-                </Link>
-                <Link 
-                  href={'/mis-citas'}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                    isActive('/mis-citas') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <FileText className="w-4 h-4" />
-                  Mis Citas
-                </Link>
+                {session?.user?.role === 'patient' && (
+                  <>
+                    <Link 
+                      href={'/agendar-cita'}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                        isActive('/agendar-cita') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Agendar Cita
+                    </Link>
+                    <Link 
+                      href={'/mi-calendario'}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                        isActive('/mi-calendario') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Calendario
+                    </Link>
+                    <Link 
+                      href={'/mis-citas'}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                        isActive('/mis-citas') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4" />
+                      Mis Citas
+                    </Link>
+                  </>
+                )}
                 <Link 
                   href={'/perfil'}
                   onClick={() => setMobileMenuOpen(false)}

@@ -11,7 +11,6 @@ async function getAuthOptions() {
   return authModule.authOptions || {};
 }
 
-// GET - Obtener una cita específica
 export async function GET(req, { params }) {
   try {
     const authOptions = await getAuthOptions();
@@ -58,7 +57,6 @@ export async function GET(req, { params }) {
   }
 }
 
-// PATCH - Actualizar estado de cita
 export async function PATCH(req, { params }) {
   try {
     const authOptions = await getAuthOptions();

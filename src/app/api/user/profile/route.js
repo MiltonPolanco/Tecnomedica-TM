@@ -10,7 +10,6 @@ async function dbConnect() {
   return mongoose.connect(process.env.MONGO_URL);
 }
 
-// GET - Obtener perfil del usuario
 export async function GET(req) {
   try {
     const session = await getServerSession(authOptions);
@@ -36,7 +35,6 @@ export async function GET(req) {
   }
 }
 
-// PUT - Actualizar perfil del usuario
 export async function PUT(req) {
   try {
     const session = await getServerSession(authOptions);
@@ -63,8 +61,7 @@ export async function PUT(req) {
 
     await dbConnect();
 
-    // Actualizar usuario
-    const updatedUser = await User.findOneAndUpdate(
+    const updatedUser = await User.findByIdAndUpdate(
       { email: session.user.email },
       {
         name: name.trim(),

@@ -10,7 +10,6 @@ async function dbConnect() {
   return mongoose.connect(process.env.MONGO_URL);
 }
 
-// GET - Listar todos los usuarios (solo admin)
 export async function GET(req) {
   try {
     const session = await getServerSession(authOptions);
@@ -54,7 +53,6 @@ export async function GET(req) {
   }
 }
 
-// PUT - Actualizar rol de usuario (solo admin)
 export async function PUT(req) {
   try {
     const session = await getServerSession(authOptions);

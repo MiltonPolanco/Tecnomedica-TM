@@ -80,7 +80,6 @@ AppointmentSchema.index({ doctor: 1, date: -1, status: 1 });
 AppointmentSchema.index({ date: 1, startTime: 1, status: 1 });
 AppointmentSchema.index({ status: 1, date: -1 });
 
-// Virtual para obtener duración en minutos
 AppointmentSchema.virtual('durationMinutes').get(function() {
   if (!this.startTime || !this.endTime) return 0;
   
@@ -90,7 +89,6 @@ AppointmentSchema.virtual('durationMinutes').get(function() {
   return (endHour * 60 + endMin) - (startHour * 60 + startMin);
 });
 
-// Validar que endTime sea después de startTime
 AppointmentSchema.pre('validate', function(next) {
   if (this.startTime && this.endTime) {
     const [startHour, startMin] = this.startTime.split(':').map(Number);
@@ -106,7 +104,6 @@ AppointmentSchema.pre('validate', function(next) {
   next();
 });
 
-// Método para verificar si hay conflicto de horarios
 AppointmentSchema.statics.checkConflict = async function(doctorId, date, startTime, endTime, excludeId = null) {
   const query = {
     doctor: doctorId,
@@ -125,7 +122,6 @@ AppointmentSchema.statics.checkConflict = async function(doctorId, date, startTi
   return !!conflict;
 };
 
-// Método para cancelar cita
 AppointmentSchema.methods.cancel = function(userId, reason) {
   this.status = 'cancelled';
   this.cancelReason = reason;
