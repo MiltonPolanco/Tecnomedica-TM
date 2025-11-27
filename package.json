@@ -30,7 +30,8 @@
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
     "react-modal": "^3.16.3",
-    "tecnomedica2": "file:"
+    "tecnomedica2": "file:",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -40,6 +41,7 @@
     "eslint-config-next": "15.1.3",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "terser-brunch": "^4.1.0",
     "typescript": "5.8.3"
   }
 }
