@@ -47,9 +47,15 @@ function NuevoHistorialContent() {
       // Pre-llenar datos desde la cita si viene de ahí
       const appointmentId = searchParams.get('appointmentId');
       const patientId = searchParams.get('patientId');
+      const sessionId = searchParams.get('sessionId');
       
       if (appointmentId && patientId) {
         fetchAppointmentData(appointmentId, patientId);
+      }
+      
+      // Si viene de una videosesión, cargar esos datos también
+      if (sessionId) {
+        fetchVideoSessionData(sessionId, appointmentId);
       }
     }
   }, [status, session, router, searchParams]);
@@ -90,7 +96,26 @@ function NuevoHistorialContent() {
         }));
       }
     } catch (error) {
-      console.error('Error al cargar datos de la cita:', error);
+      console.error('Error al cargar datos de cita:', error);
+    }
+  };
+
+  const fetchVideoSessionData = async (sessionId, appointmentId) => {
+    try {
+      const res = await fetch(`/api/video-sessions/${sessionId}`);
+      if (res.ok) {
+        const session = await res.json();
+        const durationText = `Duración de la consulta: ${session.duration} minutos`;
+        setFormData(prev => ({
+          ...prev,
+          patient: session.patient._id,
+          appointment: appointmentId || session.appointment._id,
+          consultDate: new Date(session.startedAt).toISOString().split('T')[0],
+          notes: prev.notes ? `${prev.notes}\n\n${durationText}` : durationText
+        }));
+      }
+    } catch (error) {
+      console.error('Error al cargar datos de videosesión:', error);
     }
   };
 

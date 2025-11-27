@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import dbConnect from '@/libs/dbConnect';
 import { Appointment } from '@/models/Appointment';
 import { User } from '@/models/User';
+import { VideoSession } from '@/models/VideoSession';
 import '@/models/DoctorSchedule';
 import mongoose from 'mongoose';
 
@@ -68,8 +69,23 @@ export async function GET(req) {
       .sort({ date: -1, startTime: 1 })
       .lean();
 
+    // Agregar información de videosesiones si existen
+    const appointmentsWithVideo = await Promise.all(
+      appointments.map(async (apt) => {
+        const videoSession = await VideoSession.findOne({ 
+          appointment: apt._id,
+          status: 'ended'
+        }).select('startedAt endedAt duration status').lean();
+        
+        return {
+          ...apt,
+          videoSession: videoSession || null
+        };
+      })
+    );
+
     return NextResponse.json(
-      { appointments }, 
+      { appointments: appointmentsWithVideo }, 
       { 
         status: 200,
         headers: {
@@ -169,18 +185,22 @@ export async function POST(req) {
       }
 
       // Verificar límites de reserva anticipada
+      // Combinar fecha y hora de la cita para comparación correcta
+      const [startHour, startMinute] = startTime.split(':').map(Number);
+      const appointmentDateTime = new Date(year, month - 1, day, startHour, startMinute, 0);
+      
       const now = new Date();
       const minBookingDate = new Date(now.getTime() + schedule.minAdvanceBookingHours * 60 * 60 * 1000);
       const maxBookingDate = new Date(now.getTime() + schedule.allowBookingDaysInAdvance * 24 * 60 * 60 * 1000);
 
-      if (appointmentDate < minBookingDate) {
+      if (appointmentDateTime < minBookingDate) {
         return NextResponse.json(
           { error: `Debe reservar con al menos ${schedule.minAdvanceBookingHours} horas de anticipación` },
           { status: 400 }
         );
       }
 
-      if (appointmentDate > maxBookingDate) {
+      if (appointmentDateTime > maxBookingDate) {
         return NextResponse.json(
           { error: `No puede reservar con más de ${schedule.allowBookingDaysInAdvance} días de anticipación` },
           { status: 400 }

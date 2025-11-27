@@ -16,6 +16,11 @@ export default function Header() {
     await signOut({ callbackUrl: '/' });
   };
 
+  // No mostrar header en páginas de videollamada
+  if (pathname?.startsWith('/video-call')) {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
