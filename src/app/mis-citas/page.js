@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
+import { Video } from 'lucide-react';
 import { 
   APPOINTMENT_STATUS_LABELS, 
   APPOINTMENT_STATUS_COLORS,
@@ -24,6 +25,7 @@ export default function MisCitasPage() {
   const [newStatus, setNewStatus] = useState('');
   const [cancelReason, setCancelReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [videoSessions, setVideoSessions] = useState({});
 
   const loadAppointments = useCallback(async () => {
     try {
@@ -35,6 +37,8 @@ export default function MisCitasPage() {
       
       if (res.ok) {
         setAppointments(data.appointments);
+        // Cargar sesiones de video para citas confirmadas
+        await loadVideoSessions(data.appointments);
       }
     } catch (err) {
       console.error('Error al cargar citas:', err);
@@ -42,6 +46,53 @@ export default function MisCitasPage() {
       setLoading(false);
     }
   }, []);
+
+  const loadVideoSessions = async (appointmentsList) => {
+    const sessions = {};
+    for (const apt of appointmentsList) {
+      if (apt.status === 'confirmed' || apt.status === 'in-progress') {
+        try {
+          const res = await fetch(`/api/video-sessions?appointmentId=${apt._id}`);
+          if (res.ok) {
+            const session = await res.json();
+            if (session && session._id) {
+              sessions[apt._id] = session;
+            }
+          }
+        } catch (err) {
+          console.error('Error al cargar sesión:', err);
+        }
+      }
+    }
+    setVideoSessions(sessions);
+  };
+
+  const handleStartVideoCall = async (appointmentId) => {
+    try {
+      setActionLoading(true);
+      const res = await fetch('/api/video-sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appointmentId })
+      });
+
+      if (res.ok) {
+        const session = await res.json();
+        router.push(`/video-call/${session._id}`);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Error al iniciar videollamada');
+      }
+    } catch (err) {
+      alert('Error de conexión');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleJoinVideoCall = (sessionId) => {
+    router.push(`/video-call/${sessionId}`);
+  };
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -414,11 +465,46 @@ export default function MisCitasPage() {
                     </div>
                   </div>
                   
-                  {/* Motivo */}
+                  {/* Motivo de la consulta */}
                   <div className="bg-gray-50 rounded-xl p-4">
                     <p className="text-xs text-gray-500 font-medium mb-1">Motivo de consulta</p>
                     <p className="text-gray-700">{appointment.reason}</p>
                   </div>
+
+                  {/* Información de Videollamada si existe */}
+                  {appointment.videoSession && (
+                    <div className="bg-purple-50 border-l-4 border-purple-500 rounded-r-xl p-4">
+                      <div className="flex items-start gap-3">
+                        <Video className="w-5 h-5 text-purple-600 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-purple-900 mb-1">
+                            Consulta Virtual Realizada
+                          </p>
+                          <div className="text-xs text-purple-700 space-y-1">
+                            <p>
+                              📅 Fecha: {new Date(appointment.videoSession.startedAt).toLocaleDateString('es-ES', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric'
+                              })}
+                            </p>
+                            <p>
+                              🕐 Hora: {new Date(appointment.videoSession.startedAt).toLocaleTimeString('es-ES', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })} - {new Date(appointment.videoSession.endedAt).toLocaleTimeString('es-ES', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                            <p>
+                              ⏱️ Duración: {appointment.videoSession.duration} minutos
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Mensaje de estado para pacientes */}
                   {session?.user?.role !== 'doctor' && (
@@ -503,20 +589,39 @@ export default function MisCitasPage() {
                       )}
                       
                       {appointment.status === 'confirmed' && (
-                        <button
-                          onClick={() => {
-                            setSelectedAppointment(appointment);
-                            setNewStatus('in-progress');
-                            setShowStatusModal(true);
-                          }}
-                          className="flex items-center justify-center gap-2 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
-                        >
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          Iniciar
-                        </button>
+                        <>
+                          {videoSessions[appointment._id] ? (
+                            <button
+                              onClick={() => handleJoinVideoCall(videoSessions[appointment._id]._id)}
+                              className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+                            >
+                              <Video className="w-5 h-5" />
+                              Unirse a Consulta
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleStartVideoCall(appointment._id)}
+                              disabled={actionLoading}
+                              className="flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-50"
+                            >
+                              <Video className="w-5 h-5" />
+                              Iniciar Consulta Virtual
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setSelectedAppointment(appointment);
+                              setNewStatus('completed');
+                              setShowStatusModal(true);
+                            }}
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+                          >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Marcar Completada
+                          </button>
+                        </>
                       )}
                       
                       {appointment.status === 'in-progress' && (
@@ -526,12 +631,12 @@ export default function MisCitasPage() {
                             setNewStatus('completed');
                             setShowStatusModal(true);
                           }}
-                          className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+                          className="flex items-center justify-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
                         >
                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          Completar
+                          Marcar Completada
                         </button>
                       )}
                       
@@ -567,6 +672,17 @@ export default function MisCitasPage() {
                   {/* Botones para PACIENTE */}
                   {session?.user?.role !== 'doctor' && (
                     <>
+                      {/* Botón para unirse a videollamada si hay sesión activa */}
+                      {videoSessions[appointment._id] && appointment.status === 'confirmed' && (
+                        <button
+                          onClick={() => handleJoinVideoCall(videoSessions[appointment._id]._id)}
+                          className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+                        >
+                          <Video className="w-5 h-5" />
+                          Unirse a Consulta Virtual
+                        </button>
+                      )}
+
                       {appointment.status === 'scheduled' && (
                         <button
                           onClick={() => {
