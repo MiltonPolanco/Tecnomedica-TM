@@ -26,12 +26,35 @@ export default function AgendarCitaPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [availableSpecialties, setAvailableSpecialties] = useState([]);
+  const [loadingSpecialties, setLoadingSpecialties] = useState(true);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
+    } else if (status === 'authenticated') {
+      loadAvailableSpecialties();
     }
   }, [status, router]);
+
+  const loadAvailableSpecialties = async () => {
+    try {
+      setLoadingSpecialties(true);
+      const res = await fetch('/api/doctors/specialties');
+      const data = await res.json();
+      
+      if (res.ok) {
+        setAvailableSpecialties(data.specialties || []);
+      } else {
+        setAvailableSpecialties([]);
+      }
+    } catch (err) {
+      console.error('Error al cargar especialidades:', err);
+      setAvailableSpecialties([]);
+    } finally {
+      setLoadingSpecialties(false);
+    }
+  };
 
   // Cargar doctores cuando se selecciona especialidad
   useEffect(() => {
@@ -234,12 +257,26 @@ export default function AgendarCitaPage() {
                 onChange={(e) => setFormData({ ...formData, specialty: e.target.value, doctorId: '' })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 required
+                disabled={loadingSpecialties}
               >
-                <option value="">Selecciona una especialidad</option>
-                {SPECIALTIES.map((specialty) => (
+                <option value="">
+                  {loadingSpecialties ? 'Cargando especialidades...' : 'Selecciona una especialidad'}
+                </option>
+                {availableSpecialties.length === 0 && !loadingSpecialties && (
+                  <option value="" disabled>No hay especialidades disponibles</option>
+                )}
+                {availableSpecialties.map((specialty) => (
                   <option key={specialty} value={specialty}>{specialty}</option>
                 ))}
               </select>
+              {availableSpecialties.length === 0 && !loadingSpecialties && (
+                <p className="mt-2 text-sm text-amber-600 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  Actualmente no hay doctores disponibles. Por favor intenta más tarde.
+                </p>
+              )}
             </div>
 
             {/* Doctor */}
