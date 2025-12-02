@@ -13,9 +13,14 @@ export default withAuth({
 // Configurar qué rutas proteger
 export const config = {
   matcher: [
-    // Descomenta estas rutas cuando las implementes
-    // "/mi-calendario/:path*",
-    // "/doctor/:path*",
-    // "/admin/:path*",
+    "/mi-calendario/:path*",
+    "/mis-citas/:path*",
+    "/mi-historial/:path*",
+    "/agendar-cita/:path*",
+    "/perfil/:path*",
+    "/doctor/:path*",
+    "/dashboard-doctor/:path*",
+    "/admin/:path*",
+    "/video-call/:path*",
   ],
 };
