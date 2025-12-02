@@ -173,12 +173,13 @@ export default function MisCitasPage() {
     return appointments.filter(apt => {
       let timeMatch = true;
       if (filter === 'upcoming') {
-        const aptDate = new Date(apt.date);
-        aptDate.setHours(0, 0, 0, 0);
+        // Extraer fecha sin conversión de zona horaria
+        const [year, month, day] = apt.date.split('T')[0].split('-');
+        const aptDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
         timeMatch = aptDate >= now && apt.status !== 'cancelled' && apt.status !== 'completed';
       } else if (filter === 'past') {
-        const aptDate = new Date(apt.date);
-        aptDate.setHours(0, 0, 0, 0);
+        const [year, month, day] = apt.date.split('T')[0].split('-');
+        const aptDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
         timeMatch = aptDate < now || apt.status === 'completed';
       } else if (filter === 'cancelled') {
         timeMatch = apt.status === 'cancelled';
@@ -197,9 +198,9 @@ export default function MisCitasPage() {
   }, [appointments, filter, statusFilter]);
 
   const formatDate = useCallback((dateString) => {
-    const date = new Date(dateString);
-    // Compensar offset de zona horaria para mostrar fecha correcta
-    const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+    // Extraer la fecha sin conversión de zona horaria
+    const [year, month, day] = dateString.split('T')[0].split('-');
+    const localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     return localDate.toLocaleDateString('es-ES', {
       weekday: 'long',
       year: 'numeric',

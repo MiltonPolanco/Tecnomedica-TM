@@ -96,7 +96,7 @@ export default function AgendarCitaPage() {
       const data = await res.json();
       
       if (res.ok) {
-        setDoctors(data.doctors);
+        setDoctors(data.doctors || []);
       } else {
         setDoctors([]);
       }
