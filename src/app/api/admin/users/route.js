@@ -1,114 +1,148 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import mongoose from 'mongoose';
-import '@/models/User';
+import dbConnect from '@/libs/dbConnect';
+import { User } from '@/models/User';
+import { asyncHandler, logger } from '@/utils/errorHandler';
+import { requireAuth, requireRole } from '@/utils/authHelpers';
+import { ValidationSchema, validators, sanitizers } from '@/utils/validation';
+import { NextResponse } from 'next/server';
 
-const User = mongoose.models.User || mongoose.model('User');
+// Schema de validación para actualizar usuarios
+const updateUserSchema = new ValidationSchema({
+  userId: [
+    validators.required('El ID del usuario es requerido'),
+    validators.custom((value) => {
+      const mongoose = require('mongoose');
+      return mongoose.Types.ObjectId.isValid(value);
+    }, 'ID de usuario inválido')
+  ],
+  role: [
+    validators.custom(
+      (value) => !value || ['patient', 'doctor', 'admin'].includes(value),
+      'Rol no válido. Debe ser: patient, doctor o admin'
+    )
+  ],
+  specialty: [
+    validators.custom(
+      (value) => !value || (typeof value === 'string' && value.length >= 3),
+      'La especialidad debe tener al menos 3 caracteres'
+    )
+  ],
+  isActive: [
+    validators.custom(
+      (value) => value === undefined || typeof value === 'boolean',
+      'isActive debe ser un valor booleano'
+    )
+  ]
+});
 
-async function dbConnect() {
-  if (mongoose.connection.readyState >= 1) return;
-  return mongoose.connect(process.env.MONGO_URL);
-}
+export const GET = asyncHandler(async (req) => {
+  const session = await requireAuth(req);
+  await requireRole(['admin'])(req, session); // 👈 Solo admins
+  
+  await dbConnect();
 
-export async function GET(req) {
-  try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return Response.json({ error: 'No autenticado' }, { status: 401 });
-    }
+  const { searchParams } = new URL(req.url);
+  const role = searchParams.get('role');
+  const search = searchParams.get('search');
 
-    if (session.user.role !== 'admin') {
-      return Response.json({ error: 'No autorizado - Solo administradores' }, { status: 403 });
-    }
-
-    await dbConnect();
-
-    const { searchParams } = new URL(req.url);
-    const role = searchParams.get('role');
-    const search = searchParams.get('search');
-
-    let query = {};
-    
-    if (role) {
-      query.role = role;
-    }
-
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-      ];
-    }
-
-    const users = await User.find(query)
-      .select('name email role phone bloodType isActive createdAt professionalInfo')
-      .sort({ createdAt: -1 })
-      .lean();
-
-    return Response.json({ users }, { status: 200 });
-  } catch (error) {
-    console.error('Error al obtener usuarios:', error);
-    return Response.json({ error: 'Error del servidor' }, { status: 500 });
+  let query = {};
+  
+  if (role && ['patient', 'doctor', 'admin'].includes(role)) {
+    query.role = role;
   }
-}
 
-export async function PUT(req) {
-  try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return Response.json({ error: 'No autenticado' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'admin') {
-      return Response.json({ error: 'No autorizado - Solo administradores' }, { status: 403 });
-    }
-
-    await dbConnect();
-
-    const body = await req.json();
-    const { userId, role, specialty, isActive } = body;
-
-    if (!userId) {
-      return Response.json({ error: 'ID de usuario requerido' }, { status: 400 });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return Response.json({ error: 'Usuario no encontrado' }, { status: 404 });
-    }
-
-    // Actualizar rol
-    if (role && ['patient', 'doctor', 'admin'].includes(role)) {
-      user.role = role;
-    }
-
-    // Si se cambia a doctor y se proporciona especialidad
-    if (role === 'doctor' && specialty) {
-      if (!user.professionalInfo) {
-        user.professionalInfo = {};
-      }
-      user.professionalInfo.specialty = specialty;
-    }
-
-    // Actualizar estado activo/inactivo
-    if (typeof isActive === 'boolean') {
-      user.isActive = isActive;
-    }
-
-    await user.save();
-
-    const updatedUser = await User.findById(userId)
-      .select('name email role phone bloodType isActive createdAt professionalInfo')
-      .lean();
-
-    return Response.json({ 
-      message: 'Usuario actualizado exitosamente',
-      user: updatedUser 
-    }, { status: 200 });
-  } catch (error) {
-    console.error('Error al actualizar usuario:', error);
-    return Response.json({ error: 'Error del servidor' }, { status: 500 });
+  if (search) {
+    const sanitizedSearch = sanitizers.trim(search);
+    query.$or = [
+      { name: { $regex: sanitizedSearch, $options: 'i' } },
+      { email: { $regex: sanitizedSearch, $options: 'i' } },
+    ];
   }
-}
+
+  const users = await User.find(query)
+    .select('name email role phone bloodType isActive createdAt professionalInfo')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  logger.info('Lista de usuarios obtenida', {
+    adminEmail: session.user.email,
+    totalUsers: users.length,
+    filters: { role, search: !!search }
+  });
+
+  return NextResponse.json({ users }, { status: 200 });
+});
+
+export const PUT = asyncHandler(async (req) => {
+  const session = await requireAuth(req);
+  await requireRole(['admin'])(req, session); // 👈 Solo admins
+  
+  await dbConnect();
+
+  const body = await req.json();
+  
+  // Sanitizar datos
+  const sanitized = {
+    userId: sanitizers.trim(body.userId),
+    role: body.role ? sanitizers.trim(body.role) : undefined,
+    specialty: body.specialty ? sanitizers.escape(sanitizers.trim(body.specialty)) : undefined,
+    isActive: body.isActive
+  };
+
+  // Validar datos
+  updateUserSchema.validate(sanitized);
+
+  const { userId, role, specialty, isActive } = sanitized;
+
+  const user = await User.findById(userId);
+  if (!user) {
+    logger.warn('Intento de actualizar usuario inexistente', {
+      adminEmail: session.user.email,
+      userId
+    });
+    return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+  }
+
+  const oldRole = user.role;
+
+  // Actualizar rol
+  if (role && role !== user.role) {
+    user.role = role;
+  }
+
+  // Si se cambia a doctor y se proporciona especialidad
+  if (role === 'doctor' && specialty) {
+    if (!user.professionalInfo) {
+      user.professionalInfo = {};
+    }
+    user.professionalInfo.specialty = specialty;
+  }
+
+  // Actualizar estado activo/inactivo
+  if (typeof isActive === 'boolean' && isActive !== user.isActive) {
+    user.isActive = isActive;
+  }
+
+  await user.save();
+
+  const updatedUser = await User.findById(userId)
+    .select('name email role phone bloodType isActive createdAt professionalInfo')
+    .lean();
+
+  logger.info('Usuario actualizado por admin', {
+    adminEmail: session.user.email,
+    userId,
+    userEmail: user.email,
+    changes: {
+      roleChanged: oldRole !== user.role,
+      oldRole,
+      newRole: user.role,
+      isActiveChanged: isActive !== undefined,
+      specialtyUpdated: !!specialty
+    }
+  });
+
+  return NextResponse.json({ 
+    message: 'Usuario actualizado exitosamente',
+    user: updatedUser 
+  }, { status: 200 });
+});
