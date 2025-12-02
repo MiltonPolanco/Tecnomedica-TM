@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
-import mongoConnect from '@/libs/mongoConnect';
-import User from '@/models/User';
+import dbConnect from '@/libs/dbConnect';
+import { User } from '@/models/User';
 
 export async function GET() {
   try {
-    await mongoConnect();
+    await dbConnect();
 
     // Obtener todas las especialidades únicas de los doctores activos
-    const specialties = await User.distinct('specialty', {
+    const specialties = await User.distinct('professionalInfo.specialty', {
       role: 'doctor',
-      isActive: true
+      isActive: true,
+      'professionalInfo.specialty': { $exists: true, $ne: null, $ne: '' }
     });
 
     // Filtrar valores nulos o vacíos
@@ -20,7 +21,7 @@ export async function GET() {
       specialties: validSpecialties.sort()
     });
   } catch (error) {
-    console.error('Error al obtener especialidades:', error);
+    console.error('❌ Error al obtener especialidades:', error);
     return NextResponse.json(
       { error: 'Error al cargar especialidades' },
       { status: 500 }
