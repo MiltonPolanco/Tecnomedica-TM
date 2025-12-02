@@ -46,15 +46,14 @@ export default function MiCalendarStyled() {
     const eventsMap = {};
     
     appointments.forEach(apt => {
-      const aptDate = new Date(apt.date);
-      const localDate = new Date(aptDate.getTime() + aptDate.getTimezoneOffset() * 60000);
-      const dateKey = localDate.toISOString().split('T')[0];
+      // Extraer solo la fecha en formato YYYY-MM-DD sin conversión de zona horaria
+      const dateStr = apt.date.split('T')[0];
       
-      if (!eventsMap[dateKey]) {
-        eventsMap[dateKey] = [];
+      if (!eventsMap[dateStr]) {
+        eventsMap[dateStr] = [];
       }
       
-      eventsMap[dateKey].push({
+      eventsMap[dateStr].push({
         id: apt._id,
         title: APPOINTMENT_TYPE_LABELS[apt.type] || apt.type,
         time: apt.startTime,
@@ -77,6 +76,25 @@ export default function MiCalendarStyled() {
     const dateKey = `${year}-${month}-${day}`;
     return events[dateKey] || [];
   }, [date, events]);
+
+  // Estadísticas del mes actual
+  const monthStats = useMemo(() => {
+    const currentMonth = activeStartDate.getMonth();
+    const currentYear = activeStartDate.getFullYear();
+    
+    const monthAppointments = appointments.filter(apt => {
+      const [year, month] = apt.date.split('T')[0].split('-');
+      return parseInt(year) === currentYear && parseInt(month) - 1 === currentMonth;
+    });
+
+    return {
+      total: monthAppointments.length,
+      scheduled: monthAppointments.filter(a => a.status === 'scheduled').length,
+      confirmed: monthAppointments.filter(a => a.status === 'confirmed').length,
+      completed: monthAppointments.filter(a => a.status === 'completed').length,
+      cancelled: monthAppointments.filter(a => a.status === 'cancelled').length,
+    };
+  }, [appointments, activeStartDate]);
 
   const monthNames = useMemo(
     () =>
@@ -119,7 +137,7 @@ export default function MiCalendarStyled() {
       <div className="w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden">
         {/* Header */}
         <div className="bg-blue-800 text-white p-6">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center mb-4">
             <div>
               <h2 className="text-3xl font-semibold">Mi Calendario</h2>
               <p className="mt-1">
@@ -136,6 +154,30 @@ export default function MiCalendarStyled() {
                 + Nueva Cita
               </Link>
             )}
+          </div>
+          
+          {/* Estadísticas del mes */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
+            <div className="bg-blue-700 bg-opacity-50 rounded-lg p-3">
+              <p className="text-blue-200 text-xs font-medium">Total</p>
+              <p className="text-2xl font-bold">{monthStats.total}</p>
+            </div>
+            <div className="bg-blue-600 bg-opacity-50 rounded-lg p-3">
+              <p className="text-blue-200 text-xs font-medium">Programadas</p>
+              <p className="text-2xl font-bold">{monthStats.scheduled}</p>
+            </div>
+            <div className="bg-green-600 bg-opacity-70 rounded-lg p-3">
+              <p className="text-green-100 text-xs font-medium">Confirmadas</p>
+              <p className="text-2xl font-bold">{monthStats.confirmed}</p>
+            </div>
+            <div className="bg-emerald-600 bg-opacity-70 rounded-lg p-3">
+              <p className="text-emerald-100 text-xs font-medium">Completadas</p>
+              <p className="text-2xl font-bold">{monthStats.completed}</p>
+            </div>
+            <div className="bg-red-600 bg-opacity-70 rounded-lg p-3">
+              <p className="text-red-100 text-xs font-medium">Canceladas</p>
+              <p className="text-2xl font-bold">{monthStats.cancelled}</p>
+            </div>
           </div>
         </div>
 
@@ -191,7 +233,7 @@ export default function MiCalendarStyled() {
 
         {/* Calendario + Panel de detalles */}
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
+          <div className="space-y-4">
             <Calendar
               onChange={(d) => {
                 setDate(d);
@@ -221,101 +263,196 @@ export default function MiCalendarStyled() {
               className="calendar"
               tileClassName={({ date: d, view }) => {
                 if (view !== "month") return "";
-                if (d.toDateString() === date.toDateString()) return "selected";
-                if (d.getDay() === 0 || d.getDay() === 6) return "weekend";
-                return "";
+                const key = d.toISOString().split("T")[0];
+                const dayEvents = events[key] || [];
+                
+                // Clases para días con citas
+                let classes = "";
+                if (d.toDateString() === date.toDateString()) classes += " selected";
+                if (d.getDay() === 0 || d.getDay() === 6) classes += " weekend";
+                
+                // Agregar indicador visual para días con citas
+                if (dayEvents.length > 0) {
+                  const hasConfirmed = dayEvents.some(e => e.status === 'confirmed');
+                  const hasScheduled = dayEvents.some(e => e.status === 'scheduled');
+                  const hasCancelled = dayEvents.some(e => e.status === 'cancelled');
+                  
+                  if (hasConfirmed) classes += " has-confirmed-appointment";
+                  else if (hasScheduled) classes += " has-scheduled-appointment";
+                  else if (hasCancelled) classes += " has-cancelled-appointment";
+                }
+                
+                return classes.trim();
               }}
               tileContent={({ date: d, view }) => {
                 if (view === "month") {
                   const key = d.toISOString().split("T")[0];
-                  if (events[key] && events[key].length > 0) {
+                  const dayEvents = events[key] || [];
+                  
+                  if (dayEvents.length > 0) {
                     return (
-                      <div className="dots">
-                        {events[key].slice(0, 3).map((_, i) => (
-                          <span key={i} />
-                        ))}
+                      <div className="tile-content">
+                        <div className="dots">
+                          {dayEvents.slice(0, 3).map((_, i) => (
+                            <span key={i} />
+                          ))}
+                        </div>
+                        {dayEvents.length > 3 && (
+                          <span className="more-indicator">+{dayEvents.length - 3}</span>
+                        )}
                       </div>
                     );
                   }
                 }
               }}
             />
+            
+            {/* Leyenda del calendario */}
+            <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Leyenda</h4>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 border-2 border-green-500 rounded flex items-center justify-center">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  </div>
+                  <span className="text-gray-600">Hoy</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  </div>
+                  <span className="text-gray-600">Seleccionado</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-green-100 border border-green-300 rounded flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
+                  </div>
+                  <span className="text-gray-600">Confirmadas</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-blue-100 border border-blue-300 rounded flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                  </div>
+                  <span className="text-gray-600">Programadas</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-red-50 border border-red-200 rounded flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 bg-red-600 rounded-full"></div>
+                  </div>
+                  <span className="text-gray-600">Canceladas</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-red-600 font-semibold text-base">S D</span>
+                  <span className="text-gray-600">Fines de semana</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow p-4">
-            <p className="text-xl text-gray-700 font-semibold mb-2">
-              {date.toLocaleDateString('es-ES', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
-            </p>
+          <div className="bg-gray-50 rounded-xl shadow-inner p-5 border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-800">
+                {date.toLocaleDateString('es-ES', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </h3>
+              {selectedDateEvents.length > 0 && (
+                <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  {selectedDateEvents.length} {selectedDateEvents.length === 1 ? 'cita' : 'citas'}
+                </span>
+              )}
+            </div>
             
             {selectedDateEvents.length > 0 ? (
-              <div className="mt-4 space-y-3">
-                <p className="font-medium text-gray-700">
-                  Citas del día ({selectedDateEvents.length}):
-                </p>
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
                 {selectedDateEvents.map((event) => (
                   <div
                     key={event.id}
-                    className="border-l-4 border-primary pl-3 py-2 bg-blue-50 rounded"
+                    className="bg-white border-l-4 border-blue-600 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4"
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
-                        <p className="font-semibold text-gray-800">
-                          {event.time} - {event.title}
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="font-bold text-gray-900 text-lg">{event.time}</span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${APPOINTMENT_STATUS_COLORS[event.status]}`}>
+                            {APPOINTMENT_STATUS_LABELS[event.status]}
+                          </span>
+                        </div>
+                        
+                        <p className="font-semibold text-gray-800 mb-1">
+                          {event.title}
                         </p>
+                        
                         {session?.user?.role === 'doctor' ? (
-                          <>
-                            <p className="text-sm text-gray-600">
+                          <div className="space-y-1 text-sm text-gray-600">
+                            <p className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
                               <strong>Paciente:</strong> {event.patient}
                             </p>
                             {event.patientPhone && (
-                              <p className="text-sm text-gray-600">
-                                <strong>Tel:</strong> {event.patientPhone}
+                              <p className="flex items-center gap-1">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                                {event.patientPhone}
                               </p>
                             )}
-                            <p className="text-sm text-gray-600">
+                            <p className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
                               <strong>Especialidad:</strong> {event.specialty}
                             </p>
-                          </>
+                          </div>
                         ) : (
-                          <>
-                            <p className="text-sm text-gray-600">
+                          <div className="space-y-1 text-sm text-gray-600">
+                            <p className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
                               <strong>Doctor:</strong> {event.doctor}
                             </p>
-                            <p className="text-sm text-gray-600">
+                            <p className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
                               <strong>Especialidad:</strong> {event.specialty}
                             </p>
-                          </>
+                          </div>
                         )}
+                        
                         {event.reason && (
-                          <p className="text-sm text-gray-600 mt-1">
-                            {event.reason}
-                          </p>
+                          <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-700 border border-gray-200">
+                            <p className="font-medium text-gray-800 mb-1">Motivo:</p>
+                            <p>{event.reason}</p>
+                          </div>
                         )}
-                        <span className={`inline-block mt-2 px-2 py-1 rounded-full text-xs font-medium ${APPOINTMENT_STATUS_COLORS[event.status]}`}>
-                          {APPOINTMENT_STATUS_LABELS[event.status]}
-                        </span>
                       </div>
                     </div>
                   </div>
                 ))}
+                
                 <Link
                   href="/mis-citas"
-                  className="block text-center text-primary hover:text-blue-600 font-medium mt-4"
+                  className="block text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors mt-4"
                 >
                   Ver todas mis citas →
                 </Link>
               </div>
             ) : (
-              <div className="mt-4 text-center py-8">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <div className="text-center py-12">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <p className="text-gray-600 mb-3">
+                <p className="text-gray-500 font-medium mb-4">
                   {session?.user?.role === 'doctor' 
                     ? 'No tienes citas con pacientes este día' 
                     : 'No tienes citas este día'}
@@ -323,8 +460,11 @@ export default function MiCalendarStyled() {
                 {session?.user?.role !== 'doctor' && (
                   <Link
                     href="/agendar-cita"
-                    className="inline-block bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm"
+                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors shadow-sm"
                   >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
                     Agendar cita
                   </Link>
                 )}
