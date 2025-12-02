@@ -9,7 +9,7 @@ import client from "../../../../libs/mongoConnect";
 import { User } from "@/models/User";
 
 const authOptions = {
-  secret: process.env.SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
   adapter: MongoDBAdapter(client),
 
   providers: [
