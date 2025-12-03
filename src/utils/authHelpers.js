@@ -25,19 +25,24 @@ export async function requireAuth(req) {
 }
 
 /**
- * Middleware de autorizaci\u00f3n - verifica roles
+ * Middleware de autorización - verifica roles
+ * Retorna una función middleware que verifica si el usuario tiene uno de los roles permitidos
  */
-export async function requireRole(req, allowedRoles = []) {
-  const session = await requireAuth(req);
-  
-  if (!allowedRoles.includes(session.user.role)) {
-    throw new AppError(
-      `Acceso denegado - Se requiere uno de estos roles: ${allowedRoles.join(', ')}`,
-      403
-    );
-  }
-  
-  return session;
+export function requireRole(allowedRoles = []) {
+  return async (req, session) => {
+    if (!session) {
+      session = await requireAuth(req);
+    }
+    
+    if (!allowedRoles.includes(session.user.role)) {
+      throw new AppError(
+        `Acceso denegado - Se requiere uno de estos roles: ${allowedRoles.join(', ')}`,
+        403
+      );
+    }
+    
+    return session;
+  };
 }
 
 /**
