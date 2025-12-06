@@ -1,176 +1,243 @@
 // src/app/api/appointments/[id]/route.js
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
 import dbConnect from '@/libs/dbConnect';
 import { Appointment } from '@/models/Appointment';
-import { User } from '@/models/User';
+import { asyncHandler, logger, AppError } from '@/utils/errorHandler';
+import { requireAuth, getSessionUser, canAccessResource } from '@/utils/authHelpers';
+import { ValidationSchema, validators, sanitizers } from '@/utils/validation';
+import { checkRateLimit } from '@/utils/apiHelpers';
+import mongoose from 'mongoose';
 
-// Importar authOptions
-async function getAuthOptions() {
-  const authModule = await import('../../auth/[...nextauth]/route');
-  return authModule.authOptions || {};
-}
+// Schema de validación para actualizar citas
+const updateAppointmentSchema = new ValidationSchema({
+  status: [
+    validators.custom(
+      (value) => !value || ['scheduled', 'confirmed', 'in-progress', 'completed', 'cancelled', 'no-show'].includes(value),
+      'Estado no válido'
+    )
+  ],
+  notes: [
+    validators.custom(
+      (value) => !value || (typeof value === 'string' && value.length <= 1000),
+      'Las notas no pueden exceder 1000 caracteres'
+    )
+  ],
+  cancelReason: [
+    validators.custom(
+      (value) => !value || (typeof value === 'string' && value.length >= 5 && value.length <= 500),
+      'La razón de cancelación debe tener entre 5 y 500 caracteres'
+    )
+  ]
+});
 
-export async function GET(req, { params }) {
-  try {
-    const authOptions = await getAuthOptions();
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+export const GET = asyncHandler(async (req, { params }) => {
+  const session = await requireAuth(req);
+  await dbConnect();
 
-    await dbConnect();
-
-    const appointment = await Appointment.findById(params.id)
-      .populate('patient', 'name email phone')
-      .populate('doctor', 'name email phone professionalInfo');
-
-    if (!appointment) {
-      return NextResponse.json(
-        { error: 'Cita no encontrada' },
-        { status: 404 }
-      );
-    }
-
-    // Verificar que el usuario tenga acceso a esta cita
-    const user = await User.findOne({ email: session.user.email });
-    
-    if (
-      user.role !== 'admin' &&
-      appointment.patient._id.toString() !== user._id.toString() &&
-      appointment.doctor._id.toString() !== user._id.toString()
-    ) {
-      return NextResponse.json(
-        { error: 'No tienes acceso a esta cita' },
-        { status: 403 }
-      );
-    }
-
-    return NextResponse.json({ appointment }, { status: 200 });
-  } catch (error) {
-    console.error('Error al obtener cita:', error);
-    return NextResponse.json(
-      { error: 'Error al obtener cita' },
-      { status: 500 }
-    );
+  // Validar ID
+  if (!mongoose.Types.ObjectId.isValid(params.id)) {
+    throw new AppError('ID de cita inválido', 400);
   }
-}
 
-export async function PATCH(req, { params }) {
-  try {
-    const authOptions = await getAuthOptions();
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+  const appointment = await Appointment.findById(params.id)
+    .populate('patient', 'name email phone')
+    .populate('doctor', 'name email phone professionalInfo');
 
-    await dbConnect();
+  if (!appointment) {
+    throw new AppError('Cita no encontrada', 404);
+  }
 
-    const body = await req.json();
-    const { status, notes, cancelReason } = body;
+  const user = await getSessionUser(session);
+  
+  // Verificar acceso: admin, paciente de la cita, o doctor de la cita
+  const hasAccess = canAccessResource(session, appointment.patient._id, ['admin']) ||
+                    appointment.patient._id.toString() === user._id.toString() ||
+                    appointment.doctor._id.toString() === user._id.toString();
 
-    const appointment = await Appointment.findById(params.id);
+  if (!hasAccess) {
+    logger.warn('Intento de acceso no autorizado a cita', {
+      userId: user._id,
+      appointmentId: params.id,
+      userRole: user.role
+    });
+    throw new AppError('No tienes acceso a esta cita', 403);
+  }
 
-    if (!appointment) {
-      return NextResponse.json(
-        { error: 'Cita no encontrada' },
-        { status: 404 }
-      );
-    }
+  logger.info('Cita consultada', {
+    userId: user._id,
+    appointmentId: params.id,
+    role: user.role
+  });
 
-    const user = await User.findOne({ email: session.user.email });
+  return NextResponse.json({ appointment }, { status: 200 });
+});
 
-    // Verificar permisos
-    if (
-      user.role !== 'admin' &&
-      appointment.patient.toString() !== user._id.toString() &&
-      appointment.doctor.toString() !== user._id.toString()
-    ) {
-      return NextResponse.json(
-        { error: 'No tienes permiso para modificar esta cita' },
-        { status: 403 }
-      );
-    }
-
-    // Actualizar campos
-    if (status) {
-      if (status === 'cancelled') {
-        await appointment.cancel(user._id, cancelReason || 'Sin razón especificada');
-      } else {
-        appointment.status = status;
-      }
-    }
-
-    if (notes !== undefined) {
-      appointment.notes = notes;
-    }
-
-    await appointment.save();
-
-    await appointment.populate('patient', 'name email');
-    await appointment.populate('doctor', 'name email professionalInfo.specialty');
-
+export const PATCH = asyncHandler(async (req, { params }) => {
+  const session = await requireAuth(req);
+  
+  // Rate limiting: 10 modificaciones por hora por usuario
+  const clientId = session.user.email;
+  const rateLimit = checkRateLimit(`update-appointment-${clientId}`, 10, 60 * 60 * 1000);
+  
+  if (!rateLimit.allowed) {
+    logger.warn('Rate limit excedido al actualizar cita', { email: clientId });
     return NextResponse.json(
-      {
-        success: true,
-        appointment,
-        message: 'Cita actualizada exitosamente'
+      { 
+        error: 'Demasiados intentos de actualización. Por favor, espera antes de intentar de nuevo.',
+        retryAfter: Math.ceil(rateLimit.retryAfter / 1000)
       },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Error al actualizar cita:', error);
-    return NextResponse.json(
-      { error: 'Error al actualizar cita' },
-      { status: 500 }
+      { status: 429 }
     );
   }
-}
+
+  await dbConnect();
+
+  // Validar ID
+  if (!mongoose.Types.ObjectId.isValid(params.id)) {
+    throw new AppError('ID de cita inválido', 400);
+  }
+
+  const body = await req.json();
+  
+  // Sanitizar datos
+  const sanitized = {
+    status: body.status ? sanitizers.trim(body.status) : undefined,
+    notes: body.notes ? sanitizers.escape(sanitizers.trim(body.notes)) : undefined,
+    cancelReason: body.cancelReason ? sanitizers.escape(sanitizers.trim(body.cancelReason)) : undefined
+  };
+
+  // Validar datos
+  updateAppointmentSchema.validate(sanitized);
+
+  const { status, notes, cancelReason } = sanitized;
+
+  const appointment = await Appointment.findById(params.id);
+
+  if (!appointment) {
+    throw new AppError('Cita no encontrada', 404);
+  }
+
+  const user = await getSessionUser(session);
+
+  // Verificar permisos
+  const hasAccess = canAccessResource(session, appointment.patient, ['admin']) ||
+                    appointment.patient.toString() === user._id.toString() ||
+                    appointment.doctor.toString() === user._id.toString();
+
+  if (!hasAccess) {
+    logger.warn('Intento de modificación no autorizada de cita', {
+      userId: user._id,
+      appointmentId: params.id,
+      userRole: user.role
+    });
+    throw new AppError('No tienes permiso para modificar esta cita', 403);
+  }
+
+  // Validar transiciones de estado
+  if (status && status !== appointment.status) {
+    // No se puede cambiar una cita completada o cancelada (excepto admin)
+    if ((appointment.status === 'completed' || appointment.status === 'cancelled') && user.role !== 'admin') {
+      throw new AppError('No puedes modificar una cita completada o cancelada', 400);
+    }
+
+    // Si se cancela, debe proporcionar razón
+    if (status === 'cancelled' && !cancelReason) {
+      throw new AppError('Debes proporcionar una razón para cancelar la cita', 400);
+    }
+  }
+
+  const oldStatus = appointment.status;
+
+  // Actualizar campos
+  if (status) {
+    if (status === 'cancelled') {
+      await appointment.cancel(user._id, cancelReason || 'Sin razón especificada');
+    } else {
+      appointment.status = status;
+    }
+  }
+
+  if (notes !== undefined) {
+    appointment.notes = notes;
+  }
+
+  await appointment.save();
+
+  await appointment.populate('patient', 'name email');
+  await appointment.populate('doctor', 'name email professionalInfo.specialty');
+
+  logger.info('Cita actualizada exitosamente', {
+    appointmentId: params.id,
+    userId: user._id,
+    changes: {
+      statusChanged: oldStatus !== appointment.status,
+      oldStatus,
+      newStatus: appointment.status,
+      notesUpdated: notes !== undefined,
+      cancelReason: cancelReason || null
+    }
+  });
+
+  return NextResponse.json(
+    {
+      success: true,
+      appointment,
+      message: 'Cita actualizada exitosamente'
+    },
+    { status: 200 }
+  );
+});
 
 // DELETE - Eliminar cita (solo admin)
-export async function DELETE(req, { params }) {
-  try {
-    const authOptions = await getAuthOptions();
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+export const DELETE = asyncHandler(async (req, { params }) => {
+  const session = await requireAuth(req);
+  await dbConnect();
 
-    await dbConnect();
-
-    const user = await User.findOne({ email: session.user.email });
-
-    if (user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Solo administradores pueden eliminar citas' },
-        { status: 403 }
-      );
-    }
-
-    const appointment = await Appointment.findByIdAndDelete(params.id);
-
-    if (!appointment) {
-      return NextResponse.json(
-        { error: 'Cita no encontrada' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Cita eliminada exitosamente'
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Error al eliminar cita:', error);
-    return NextResponse.json(
-      { error: 'Error al eliminar cita' },
-      { status: 500 }
-    );
+  // Validar ID
+  if (!mongoose.Types.ObjectId.isValid(params.id)) {
+    throw new AppError('ID de cita inválido', 400);
   }
-}
+
+  const user = await getSessionUser(session);
+
+  // Solo admin puede eliminar
+  if (user.role !== 'admin') {
+    logger.warn('Intento de eliminación de cita por usuario no admin', {
+      userId: user._id,
+      appointmentId: params.id,
+      role: user.role
+    });
+    throw new AppError('Solo administradores pueden eliminar citas', 403);
+  }
+
+  const appointment = await Appointment.findById(params.id);
+
+  if (!appointment) {
+    throw new AppError('Cita no encontrada', 404);
+  }
+
+  // Guardar info antes de eliminar para el log
+  const appointmentInfo = {
+    id: appointment._id,
+    patient: appointment.patient,
+    doctor: appointment.doctor,
+    date: appointment.date,
+    status: appointment.status
+  };
+
+  await Appointment.findByIdAndDelete(params.id);
+
+  logger.info('Cita eliminada por administrador', {
+    adminId: user._id,
+    adminEmail: user.email,
+    deletedAppointment: appointmentInfo
+  });
+
+  return NextResponse.json(
+    {
+      success: true,
+      message: 'Cita eliminada exitosamente'
+    },
+    { status: 200 }
+  );
+});
