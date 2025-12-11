@@ -43,8 +43,8 @@ export default function Header() {
             <Link
               href={'/'}
               className={`px-4 py-2 rounded-lg font-medium transition-all ${isActive('/')
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                ? 'bg-blue-50 text-blue-600'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
             >
               Inicio
@@ -54,8 +54,8 @@ export default function Header() {
                 <Link
                   href={'/servicios'}
                   className={`px-4 py-2 rounded-lg font-medium transition-all ${isActive('/servicios')
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                 >
                   Servicios
@@ -63,8 +63,8 @@ export default function Header() {
                 <Link
                   href={'/sobre-nosotros'}
                   className={`px-4 py-2 rounded-lg font-medium transition-all ${isActive('/sobre-nosotros')
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                 >
                   Nosotros
@@ -72,8 +72,8 @@ export default function Header() {
                 <Link
                   href={'/contactanos'}
                   className={`px-4 py-2 rounded-lg font-medium transition-all ${isActive('/contactanos')
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                 >
                   Contacto
@@ -86,8 +86,8 @@ export default function Header() {
                   <Link
                     href={'/admin/usuarios'}
                     className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/admin/usuarios')
-                        ? 'bg-blue-50 text-blue-600'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                   >
                     <Shield className="w-4 h-4" />
@@ -99,8 +99,8 @@ export default function Header() {
                     <Link
                       href={'/dashboard-doctor'}
                       className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/dashboard-doctor')
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                     >
                       <Activity className="w-4 h-4" />
@@ -109,8 +109,8 @@ export default function Header() {
                     <Link
                       href={'/doctor/horarios'}
                       className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/doctor/horarios')
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                     >
                       <Clock className="w-4 h-4" />
@@ -119,8 +119,8 @@ export default function Header() {
                     <Link
                       href={'/doctor/historiales'}
                       className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/doctor/historiales')
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                     >
                       <Clipboard className="w-4 h-4" />
@@ -129,8 +129,8 @@ export default function Header() {
                     <Link
                       href={'/mi-calendario'}
                       className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/mi-calendario')
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                     >
                       <Calendar className="w-4 h-4" />
@@ -139,8 +139,8 @@ export default function Header() {
                     <Link
                       href={'/mis-citas'}
                       className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/mis-citas')
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                     >
                       <FileText className="w-4 h-4" />
@@ -153,8 +153,8 @@ export default function Header() {
                     <Link
                       href={'/agendar-cita'}
                       className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/agendar-cita')
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                     >
                       <Calendar className="w-4 h-4" />
@@ -163,8 +163,8 @@ export default function Header() {
                     <Link
                       href={'/mi-calendario'}
                       className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/mi-calendario')
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                     >
                       <Calendar className="w-4 h-4" />
@@ -173,8 +173,8 @@ export default function Header() {
                     <Link
                       href={'/mi-historial'}
                       className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/mi-historial')
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                     >
                       <Clipboard className="w-4 h-4" />
@@ -183,8 +183,8 @@ export default function Header() {
                     <Link
                       href={'/mis-citas'}
                       className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/mis-citas')
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                     >
                       <FileText className="w-4 h-4" />
@@ -200,6 +200,7 @@ export default function Header() {
           <div className="hidden md:flex items-center gap-3">
             {status === 'authenticated' ? (
               <>
+                <NotificationBell />
                 <Link
                   href="/perfil"
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-all"

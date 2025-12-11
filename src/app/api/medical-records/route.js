@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import { MedicalRecord } from '@/models/MedicalRecord';
 import { User } from '@/models/User';
 import { Appointment } from '@/models/Appointment';
+import { Notification } from '@/models/Notification';
 
 async function connectDB() {
   if (mongoose.connection.readyState === 0) {
@@ -68,7 +69,7 @@ export async function POST(request) {
     await connectDB();
 
     const data = await request.json();
-    
+
     const patientExists = await User.findById(data.patient);
     if (!patientExists || patientExists.role !== 'patient') {
       return NextResponse.json(
@@ -82,7 +83,7 @@ export async function POST(request) {
       ...data,
       doctor: session.user.id
     };
-    
+
     if (!recordData.appointment || recordData.appointment === '') {
       delete recordData.appointment;
     }
@@ -93,6 +94,26 @@ export async function POST(request) {
       .populate('patient', 'name email phone')
       .populate('doctor', 'name email')
       .populate('appointment', 'appointmentType status');
+
+    // Trigger Notification if exams were added
+    // Trigger Notification
+    let title = 'Nuevo Historial Médico';
+    let message = `El Dr. ${session.user.name} ha creado un nuevo historial médico.`;
+    let type = 'info';
+
+    if (newRecord.exams && newRecord.exams.length > 0) {
+      title = 'Nuevos resultados de exámenes';
+      message = `El Dr. ${session.user.name} ha agregado nuevos resultados de exámenes a tu historial.`;
+      type = 'success';
+    }
+
+    await Notification.create({
+      userId: newRecord.patient,
+      title,
+      message,
+      type,
+      link: `/mi-historial/${newRecord._id}`
+    });
 
     return NextResponse.json(populatedRecord, { status: 201 });
   } catch (error) {
