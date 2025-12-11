@@ -1,17 +1,15 @@
 'use client';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useCallback } from 'react';
-import { FileText, Search, Plus, Calendar, User, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, Search, FileText, Calendar, Plus, User as UserIcon } from 'lucide-react';
 
 export default function HistorialesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [records, setRecords] = useState([]);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPatient, setSelectedPatient] = useState('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -21,39 +19,51 @@ export default function HistorialesPage() {
     }
   }, [status, session, router]);
 
-  const fetchRecords = useCallback(async () => {
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.role === 'doctor') {
+      fetchPatients();
+    }
+  }, [status, session]);
+
+  const fetchPatients = async () => {
     try {
       setLoading(true);
-      const url = selectedPatient
-        ? `/api/medical-records?patientId=${selectedPatient}`
-        : '/api/medical-records';
-      const res = await fetch(url);
-      const data = await res.json();
-      setRecords(data);
+      // Get all medical records to extract unique patients
+      const res = await fetch('/api/medical-records');
+      const records = await res.json();
 
-      const uniquePatients = Array.from(
-        new Map(data.map((r) => [r.patient._id, r.patient])).values()
-      );
-      setPatients(uniquePatients);
+      // Group records by patient and count
+      const patientsMap = new Map();
+      records.forEach(record => {
+        const patientId = record.patient._id;
+        if (!patientsMap.has(patientId)) {
+          patientsMap.set(patientId, {
+            ...record.patient,
+            recordCount: 0,
+            lastConsult: record.consultDate
+          });
+        }
+        const patient = patientsMap.get(patientId);
+        patient.recordCount++;
+        // Update last consult if this is more recent
+        if (new Date(record.consultDate) > new Date(patient.lastConsult)) {
+          patient.lastConsult = record.consultDate;
+        }
+      });
+
+      setPatients(Array.from(patientsMap.values()));
     } catch (error) {
-      console.error('Error al cargar historiales:', error);
+      console.error('Error al cargar pacientes:', error);
     } finally {
       setLoading(false);
     }
-  }, [selectedPatient]);
+  };
 
-  useEffect(() => {
-    if (status === 'authenticated' && session?.user?.role === 'doctor') {
-      fetchRecords();
-    }
-  }, [status, session, selectedPatient, fetchRecords]);
-
-  const filteredRecords = records.filter((record) => {
+  const filteredPatients = patients.filter((patient) => {
     const searchLower = searchTerm.toLowerCase();
     return (
-      record.patient.name.toLowerCase().includes(searchLower) ||
-      record.diagnosis.toLowerCase().includes(searchLower) ||
-      record.reason.toLowerCase().includes(searchLower)
+      patient.name.toLowerCase().includes(searchLower) ||
+      patient.email.toLowerCase().includes(searchLower)
     );
   });
 
@@ -84,51 +94,34 @@ export default function HistorialesPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Historiales Médicos
+            Mis Pacientes
           </h1>
           <p className="text-gray-600">
-            Gestiona y consulta los historiales de tus pacientes
+            Accede a los historiales médicos de tus pacientes
           </p>
         </div>
 
-        {/* Filters */}
+        {/* Search & Actions */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex flex-col md:flex-row gap-4 items-end">
             {/* Search */}
-            <div className="md:col-span-2">
+            <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="Buscar por paciente, diagnóstico o motivo..."
+                  placeholder="Buscar paciente por nombre o email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
 
-            {/* Patient Filter */}
-            <div>
-              <select
-                value={selectedPatient}
-                onChange={(e) => setSelectedPatient(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Todos los pacientes</option>
-                {patients.map((patient) => (
-                  <option key={patient._id} value={patient._id}>
-                    {patient.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-4">
+            {/* New Record Button */}
             <button
               onClick={() => router.push('/doctor/historiales/nuevo')}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-md hover:shadow-lg"
             >
               <Plus className="w-5 h-5" />
               Nuevo Historial
@@ -136,89 +129,70 @@ export default function HistorialesPage() {
           </div>
         </div>
 
-        {/* Records List */}
-        {filteredRecords.length === 0 ? (
+        {/* Patients List */}
+        {filteredPatients.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No hay historiales
+              {searchTerm ? 'No se encontraron pacientes' : 'No hay pacientes aún'}
             </h3>
             <p className="text-gray-600 mb-6">
-              {searchTerm || selectedPatient
-                ? 'No se encontraron historiales con los filtros aplicados'
-                : 'Aún no has creado ningún historial médico'}
+              {searchTerm
+                ? 'Intenta con otro término de búsqueda'
+                : 'Comienza creando tu primer historial médico'}
             </p>
-            <button
-              onClick={() => router.push('/doctor/historiales/nuevo')}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Crear Primer Historial
-            </button>
+            {!searchTerm && (
+              <button
+                onClick={() => router.push('/doctor/historiales/nuevo')}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              >
+                <Plus className="w-5 h-5" />
+                Crear Primer Historial
+              </button>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {filteredRecords.map((record) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredPatients.map((patient) => (
               <div
-                key={record._id}
-                onClick={() => router.push(`/doctor/historiales/${record._id}`)}
-                className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer border border-gray-100"
+                key={patient._id}
+                onClick={() => router.push(`/doctor/historiales/paciente/${patient._id}`)}
+                className="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-blue-200"
               >
-                <div className="flex items-start justify-between">
+                {/* Patient Avatar */}
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-md">
+                    {patient.name.charAt(0).toUpperCase()}
+                  </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {record.patient.name}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {record.patient.email}
-                        </p>
-                      </div>
-                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 truncate">
+                      {patient.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 truncate">
+                      {patient.email}
+                    </p>
+                  </div>
+                </div>
 
-                    <div className="ml-13 space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-gray-700">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span>{formatDate(record.consultDate)}</span>
-                      </div>
-
-                      <div>
-                        <span className="text-sm font-medium text-gray-700">
-                          Motivo:
-                        </span>
-                        <span className="text-sm text-gray-600 ml-2">
-                          {record.reason}
-                        </span>
-                      </div>
-
-                      <div>
-                        <span className="text-sm font-medium text-gray-700">
-                          Diagnóstico:
-                        </span>
-                        <span className="text-sm text-gray-600 ml-2">
-                          {record.diagnosis}
-                        </span>
-                      </div>
-
-                      {record.nextFollowUp && (
-                        <div className="flex items-center gap-2 text-sm text-amber-600">
-                          <Clock className="w-4 h-4" />
-                          <span>
-                            Próximo seguimiento:{' '}
-                            {formatDate(record.nextFollowUp)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                {/* Patient Info */}
+                <div className="space-y-3 border-t border-gray-100 pt-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Historiales
+                    </span>
+                    <span className="font-semibold text-blue-600">
+                      {patient.recordCount}
+                    </span>
                   </div>
 
-                  <div className="text-sm text-gray-500">
-                    <FileText className="w-6 h-6" />
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Calendar className="w-4 h-4" />
+                    <span>Última consulta:</span>
                   </div>
+                  <p className="text-sm font-medium text-gray-800 ml-6">
+                    {formatDate(patient.lastConsult)}
+                  </p>
                 </div>
               </div>
             ))}

@@ -2,7 +2,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Edit2, Calendar, User, Activity, Pill, FileText, Clock } from 'lucide-react';
+import { ArrowLeft, Edit2, Calendar, User, Activity, Pill, FileText, Clock, CheckCircle, Printer } from 'lucide-react';
 
 export default function HistorialDetallePage({ params }) {
   const { data: session, status } = useSession();
@@ -248,34 +248,61 @@ export default function HistorialDetallePage({ params }) {
               </div>
             )}
 
+
             {/* Exams */}
             {record.exams && record.exams.length > 0 && (
               <div className="bg-white rounded-xl shadow-sm p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Activity className="w-5 h-5 text-teal-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Exámenes Realizados</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-teal-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Exámenes Realizados</h3>
+                  </div>
+                  <span className="text-sm text-gray-500">{record.exams.length} {record.exams.length === 1 ? 'examen' : 'exámenes'}</span>
                 </div>
-                <div className="space-y-3">
-                  {record.exams.map((exam, index) => (
-                    <div key={index} className="p-4 bg-teal-50 rounded-lg border border-teal-100">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-semibold text-gray-900">{exam.name}</p>
-                          <p className="text-sm text-gray-500">{formatDate(exam.date)}</p>
+                <div className="space-y-4">
+                  {record.exams.map((exam, index) => {
+                    const examStatus = exam.status || 'completed';
+                    const statusConfig = {
+                      completed: { label: 'Completado', color: 'text-green-700 bg-green-100 border-green-200', icon: CheckCircle },
+                      pending: { label: 'Pendiente', color: 'text-amber-700 bg-amber-100 border-amber-200', icon: Clock },
+                      requested: { label: 'Solicitado', color: 'text-blue-700 bg-blue-100 border-blue-200', icon: Activity }
+                    };
+
+                    const config = statusConfig[examStatus] || statusConfig.completed;
+                    const StatusIcon = config.icon;
+
+                    return (
+                      <div key={index} className="p-5 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl border-2 border-teal-100 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-bold text-gray-900 text-lg">{exam.name}</h4>
+                              <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${config.color}`}>
+                                <StatusIcon className="w-3 h-3" />
+                                {config.label}
+                              </div>
+                            </div>
+                            <p className="text-sm text-gray-600 flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              {formatDate(exam.date)}
+                            </p>
+                          </div>
+                          {exam.result && (
+                            <div className="ml-4 bg-white px-4 py-2 rounded-lg text-sm font-semibold text-teal-700 shadow-sm border border-teal-200">
+                              {exam.result}
+                            </div>
+                          )}
                         </div>
-                        {exam.result && (
-                          <div className="bg-white px-3 py-1 rounded-full text-sm font-medium text-teal-700 shadow-sm">
-                            {exam.result}
+                        {exam.notes && (
+                          <div className="mt-3 p-3 bg-white/70 rounded-lg border border-teal-100">
+                            <p className="text-sm text-gray-700 italic leading-relaxed">
+                              "{exam.notes}"
+                            </p>
                           </div>
                         )}
                       </div>
-                      {exam.notes && (
-                        <p className="mt-2 text-sm text-gray-600 italic">
-                          "{exam.notes}"
-                        </p>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -315,8 +342,8 @@ export default function HistorialDetallePage({ params }) {
                       key={r._id}
                       onClick={() => router.push(`/doctor/historiales/${r._id}`)}
                       className={`w-full text-left p-3 rounded-lg transition-colors ${r._id === recordId
-                          ? 'bg-blue-100 border-2 border-blue-600'
-                          : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
+                        ? 'bg-blue-100 border-2 border-blue-600'
+                        : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
                         }`}
                     >
                       <p className="text-sm font-medium text-gray-900">

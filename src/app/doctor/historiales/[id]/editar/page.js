@@ -40,7 +40,8 @@ export default function EditarHistorialPage() {
     name: '',
     result: '',
     notes: '',
-    date: new Date().toLocaleDateString('sv-SE')
+    date: new Date().toLocaleDateString('sv-SE'),
+    status: 'completed'
   });
 
   useEffect(() => {
@@ -551,33 +552,71 @@ export default function EditarHistorialPage() {
             {/* Exams List */}
             {formData.exams.length > 0 && (
               <div className="mb-6 space-y-3">
-                {formData.exams.map((exam, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-teal-100 hover:shadow-md transition-shadow">
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <p className="font-semibold text-gray-900 text-lg">{exam.name}</p>
-                        <span className="text-sm text-gray-500">{exam.date}</span>
+                {formData.exams.map((exam, index) => {
+                  const examStatus = exam.status || 'completed';
+                  const statusConfig = {
+                    completed: { label: 'Completado', color: 'text-green-700 bg-green-100', icon: '✓' },
+                    pending: { label: 'Pendiente', color: 'text-amber-700 bg-amber-100', icon: '⏱️' },
+                    requested: { label: 'Solicitado', color: 'text-blue-700 bg-blue-100', icon: '📋' }
+                  };
+                  const config = statusConfig[examStatus] || statusConfig.completed;
+
+                  return (
+                    <div key={index} className="p-5 bg-white rounded-xl shadow-sm border-2 border-teal-100 hover:shadow-md transition-shadow">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <p className="font-bold text-gray-900 text-lg">{exam.name}</p>
+                              <p className="text-sm text-gray-500 mt-1">{exam.date}</p>
+                            </div>
+                            <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${config.color}`}>
+                              {config.icon} {config.label}
+                            </div>
+                          </div>
+
+                          {exam.result && (
+                            <p className="text-sm text-gray-700 mb-2">
+                              <span className="font-medium">Resultado:</span> {exam.result}
+                            </p>
+                          )}
+                          {exam.notes && (
+                            <p className="text-sm text-gray-600 italic">"{exam.notes}"</p>
+                          )}
+
+                          {/* Status Selector */}
+                          <div className="mt-3 pt-3 border-t border-gray-100">
+                            <label className="block text-xs text-gray-600 mb-2">Cambiar estado:</label>
+                            <select
+                              value={exam.status || 'completed'}
+                              onChange={(e) => {
+                                const updatedExams = [...formData.exams];
+                                updatedExams[index] = { ...exam, status: e.target.value };
+                                setFormData({ ...formData, exams: updatedExams });
+                              }}
+                              className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white text-sm"
+                            >
+                              <option value="completed">✓ Completado</option>
+                              <option value="pending">⏱️ Pendiente</option>
+                              <option value="requested">📋 Solicitado</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveExam(index)}
+                          className="flex-shrink-0 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Eliminar examen"
+                        >
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </div>
-                      {exam.result && (
-                        <p className="text-sm text-gray-600 mt-1">
-                          <span className="font-medium">Resultado:</span> {exam.result}
-                        </p>
-                      )}
-                      {exam.notes && (
-                        <p className="text-sm text-gray-500 mt-1 italic">{exam.notes}</p>
-                      )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveExam(index)}
-                      className="ml-4 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -619,6 +658,18 @@ export default function EditarHistorialPage() {
                     rows={2}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Estado</label>
+                  <select
+                    value={newExam.status || 'completed'}
+                    onChange={(e) => setNewExam({ ...newExam, status: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm bg-white"
+                  >
+                    <option value="completed">✓ Completado</option>
+                    <option value="pending">⏱️ Pendiente</option>
+                    <option value="requested">📋 Solicitado</option>
+                  </select>
                 </div>
                 <button
                   type="button"

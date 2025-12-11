@@ -40,7 +40,8 @@ function NuevoHistorialContent() {
     name: '',
     date: new Date().toLocaleDateString('sv-SE'),
     result: '',
-    notes: ''
+    notes: '',
+    status: 'completed'
   });
 
   useEffect(() => {
@@ -662,6 +663,18 @@ function NuevoHistorialContent() {
                     onChange={(e) => setNewExam({ ...newExam, result: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Estado</label>
+                  <select
+                    value={newExam.status || 'completed'}
+                    onChange={(e) => setNewExam({ ...newExam, status: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm bg-white"
+                  >
+                    <option value="completed">✓ Completado</option>
+                    <option value="pending">⏱️ Pendiente</option>
+                    <option value="requested">📋 Solicitado</option>
+                  </select>
                 </div>
                 <div className="md:col-span-2">
                   <input
