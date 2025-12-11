@@ -2,7 +2,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Users, Search, FileText, Calendar, Plus, User as UserIcon, ChevronDown, ChevronUp, Edit2, Activity, Pill, Clock, X } from 'lucide-react';
+import { Users, Search, FileText, Calendar, Plus, User as UserIcon, ChevronDown, ChevronUp, Edit2, Activity, Pill, Clock, X, Eye } from 'lucide-react';
 export default function HistorialesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -194,14 +194,14 @@ export default function HistorialesPage() {
             <button
               onClick={() => setSelectedPatient(null)}
               className={`w-full p-4 text-left transition-all border-l-4 ${!selectedPatient
-                  ? 'border-blue-600 bg-blue-50/80'
-                  : 'border-transparent hover:bg-gray-50 hover:border-gray-200'
+                ? 'border-blue-600 bg-blue-50/80'
+                : 'border-transparent hover:bg-gray-50 hover:border-gray-200'
                 }`}
             >
               <div className="flex items-center gap-3">
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-sm ${!selectedPatient
-                    ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
-                    : 'bg-gradient-to-br from-gray-400 to-gray-500'
+                  ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                  : 'bg-gradient-to-br from-gray-400 to-gray-500'
                   }`}>
                   <Users className="w-5 h-5 text-white" />
                 </div>
@@ -239,14 +239,14 @@ export default function HistorialesPage() {
                     key={patient._id}
                     onClick={() => setSelectedPatient(patient)}
                     className={`w-full p-3 text-left rounded-xl transition-all ${selectedPatient?._id === patient._id
-                        ? 'bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25'
-                        : 'hover:bg-white hover:shadow-md bg-transparent'
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25'
+                      : 'hover:bg-white hover:shadow-md bg-transparent'
                       }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm ${selectedPatient?._id === patient._id
-                          ? 'bg-white/20 text-white'
-                          : 'bg-gradient-to-br from-blue-500 to-purple-600 text-white'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-gradient-to-br from-blue-500 to-purple-600 text-white'
                         }`}>
                         {patient.name?.charAt(0).toUpperCase()}
                       </div>
@@ -261,8 +261,8 @@ export default function HistorialesPage() {
                         </p>
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${selectedPatient?._id === patient._id
-                              ? 'bg-white/20 text-white'
-                              : 'bg-blue-100 text-blue-700'
+                            ? 'bg-white/20 text-white'
+                            : 'bg-blue-100 text-blue-700'
                             }`}>
                             📋 {patient.recordCount} {patient.recordCount === 1 ? 'historial' : 'historiales'}
                           </span>
@@ -406,6 +406,13 @@ export default function HistorialesPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 ml-4">
+                            <button
+                              onClick={() => router.push(`/doctor/historiales/${record._id}`)}
+                              className="p-2.5 text-gray-600 hover:bg-green-50 hover:text-green-600 rounded-lg transition-all"
+                              title="Ver historial completo"
+                            >
+                              <Eye className="w-5 h-5" />
+                            </button>
                             <button
                               onClick={() => router.push(`/doctor/historiales/${record._id}/editar`)}
                               className="p-2.5 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all"

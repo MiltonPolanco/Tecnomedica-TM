@@ -44,6 +44,14 @@ export default function EditarHistorialPage() {
     status: 'completed'
   });
 
+  // Estados para las unidades de medida
+  const [vitalSignUnits, setVitalSignUnits] = useState({
+    heartRate: 'bpm',
+    temperature: '°C',
+    weight: 'kg',
+    height: 'm'
+  });
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
@@ -166,12 +174,26 @@ export default function EditarHistorialPage() {
       return;
     }
 
+    // Combinar valores de signos vitales con sus unidades
+    const vitalSignsWithUnits = {
+      bloodPressure: formData.vitalSigns.bloodPressure,
+      heartRate: formData.vitalSigns.heartRate ? `${formData.vitalSigns.heartRate} ${vitalSignUnits.heartRate}` : '',
+      temperature: formData.vitalSigns.temperature ? `${formData.vitalSigns.temperature} ${vitalSignUnits.temperature}` : '',
+      weight: formData.vitalSigns.weight ? `${formData.vitalSigns.weight} ${vitalSignUnits.weight}` : '',
+      height: formData.vitalSigns.height ? `${formData.vitalSigns.height} ${vitalSignUnits.height}` : ''
+    };
+
+    const dataToSend = {
+      ...formData,
+      vitalSigns: vitalSignsWithUnits
+    };
+
     setSaving(true);
     try {
       const res = await fetch(`/api/medical-records/${params.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(dataToSend)
       });
 
       if (res.ok) {
@@ -296,7 +318,11 @@ export default function EditarHistorialPage() {
                     placeholder="70"
                     className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
                   />
-                  <select className="w-20 px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 shadow-sm">
+                  <select
+                    value={vitalSignUnits.heartRate}
+                    onChange={(e) => setVitalSignUnits({ ...vitalSignUnits, heartRate: e.target.value })}
+                    className="w-24 px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 shadow-sm"
+                  >
                     <option value="bpm">bpm</option>
                   </select>
                 </div>
@@ -313,7 +339,11 @@ export default function EditarHistorialPage() {
                     placeholder="36.5"
                     className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
                   />
-                  <select className="w-20 px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 shadow-sm">
+                  <select
+                    value={vitalSignUnits.temperature}
+                    onChange={(e) => setVitalSignUnits({ ...vitalSignUnits, temperature: e.target.value })}
+                    className="w-24 px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 shadow-sm"
+                  >
                     <option value="°C">°C</option>
                     <option value="°F">°F</option>
                   </select>
@@ -331,7 +361,11 @@ export default function EditarHistorialPage() {
                     placeholder="70"
                     className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
                   />
-                  <select className="w-20 px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 shadow-sm">
+                  <select
+                    value={vitalSignUnits.weight}
+                    onChange={(e) => setVitalSignUnits({ ...vitalSignUnits, weight: e.target.value })}
+                    className="w-24 px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 shadow-sm"
+                  >
                     <option value="kg">kg</option>
                     <option value="lb">lb</option>
                   </select>
@@ -349,7 +383,11 @@ export default function EditarHistorialPage() {
                     placeholder="1.70"
                     className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
                   />
-                  <select className="w-20 px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 shadow-sm">
+                  <select
+                    value={vitalSignUnits.height}
+                    onChange={(e) => setVitalSignUnits({ ...vitalSignUnits, height: e.target.value })}
+                    className="w-24 px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 shadow-sm"
+                  >
                     <option value="m">m</option>
                     <option value="cm">cm</option>
                   </select>
