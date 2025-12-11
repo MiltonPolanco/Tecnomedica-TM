@@ -2,7 +2,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { FileText, Calendar, Activity, Pill, User, Clock } from 'lucide-react';
+import { FileText, Calendar, Activity, Pill, User, Clock, Eye } from 'lucide-react';
 
 export default function MiHistorialPage() {
   const { data: session, status } = useSession();
@@ -91,27 +91,38 @@ export default function MiHistorialPage() {
                 </h3>
                 <div className="space-y-3">
                   {records.map((record) => (
-                    <button
+                    <div
                       key={record._id}
-                      onClick={() => setSelectedRecord(record)}
-                      className={`w-full text-left p-4 rounded-lg transition-colors ${selectedRecord?._id === record._id
-                          ? 'bg-blue-100 border-2 border-blue-600'
-                          : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
+                      className={`p-4 rounded-lg transition-colors ${selectedRecord?._id === record._id
+                        ? 'bg-blue-100 border-2 border-blue-600'
+                        : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
                         }`}
                     >
-                      <div className="flex items-center gap-2 mb-2">
-                        <Calendar className="w-4 h-4 text-gray-600" />
-                        <p className="text-sm font-medium text-gray-900">
-                          {formatDate(record.consultDate)}
+                      <button
+                        onClick={() => setSelectedRecord(record)}
+                        className="w-full text-left"
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <Calendar className="w-4 h-4 text-gray-600" />
+                          <p className="text-sm font-medium text-gray-900">
+                            {formatDate(record.consultDate)}
+                          </p>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-1">
+                          Dr. {record.doctor.name}
                         </p>
-                      </div>
-                      <p className="text-xs text-gray-600 mb-1">
-                        Dr. {record.doctor.name}
-                      </p>
-                      <p className="text-sm text-gray-800 font-medium">
-                        {record.reason}
-                      </p>
-                    </button>
+                        <p className="text-sm text-gray-800 font-medium">
+                          {record.reason}
+                        </p>
+                      </button>
+                      <button
+                        onClick={() => router.push(`/mi-historial/${record._id}`)}
+                        className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Ver Completo
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -159,7 +170,7 @@ export default function MiHistorialPage() {
                   </div>
 
                   {/* Vital Signs */}
-                  {Object.values(selectedRecord.vitalSigns).some(v => v) && (
+                  {selectedRecord.vitalSigns && Object.values(selectedRecord.vitalSigns).some(v => v) && (
                     <div className="bg-white rounded-xl shadow-sm p-6">
                       <div className="flex items-center gap-2 mb-4">
                         <Activity className="w-5 h-5 text-blue-600" />

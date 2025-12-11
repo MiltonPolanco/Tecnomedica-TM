@@ -134,6 +134,48 @@ export default function MiHistorialDetallePage({ params }) {
                         </div>
                     </div>
 
+                    {/* Vital Signs */}
+                    {record.vitalSigns && Object.values(record.vitalSigns).some(v => v) && (
+                        <div className="bg-white rounded-xl shadow-sm p-6">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Activity className="w-5 h-5 text-blue-600" />
+                                <h3 className="text-lg font-semibold text-gray-900">Signos Vitales</h3>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                                {record.vitalSigns.bloodPressure && (
+                                    <div className="p-4 bg-gradient-to-br from-red-50 to-rose-50 rounded-xl border border-red-100">
+                                        <p className="text-xs text-gray-600 mb-1">Presión Arterial</p>
+                                        <p className="font-bold text-gray-900 text-lg">{record.vitalSigns.bloodPressure}</p>
+                                    </div>
+                                )}
+                                {record.vitalSigns.heartRate && (
+                                    <div className="p-4 bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl border border-pink-100">
+                                        <p className="text-xs text-gray-600 mb-1">Frecuencia Cardíaca</p>
+                                        <p className="font-bold text-gray-900 text-lg">{record.vitalSigns.heartRate}</p>
+                                    </div>
+                                )}
+                                {record.vitalSigns.temperature && (
+                                    <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-100">
+                                        <p className="text-xs text-gray-600 mb-1">Temperatura</p>
+                                        <p className="font-bold text-gray-900 text-lg">{record.vitalSigns.temperature}</p>
+                                    </div>
+                                )}
+                                {record.vitalSigns.weight && (
+                                    <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+                                        <p className="text-xs text-gray-600 mb-1">Peso</p>
+                                        <p className="font-bold text-gray-900 text-lg">{record.vitalSigns.weight}</p>
+                                    </div>
+                                )}
+                                {record.vitalSigns.height && (
+                                    <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100">
+                                        <p className="text-xs text-gray-600 mb-1">Altura</p>
+                                        <p className="font-bold text-gray-900 text-lg">{record.vitalSigns.height}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Diagnosis & Treatment */}
                     <div className="bg-white rounded-xl shadow-sm p-6">
                         <div className="flex items-center gap-2 mb-4">
