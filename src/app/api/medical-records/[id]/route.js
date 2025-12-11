@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import mongoose from 'mongoose';
 import { MedicalRecord } from '@/models/MedicalRecord';
 import { Appointment } from '@/models/Appointment';
+import { Notification } from '@/models/Notification';
 
 async function connectDB() {
   if (mongoose.connection.readyState === 0) {
@@ -90,6 +91,17 @@ export async function PUT(request, { params }) {
       .populate('patient', 'name email phone bloodType')
       .populate('doctor', 'name email')
       .populate('appointment', 'appointmentType appointmentDate status');
+
+    // Trigger Notification if exams were added/updated
+    if (data.exams && data.exams.length > 0) {
+      await Notification.create({
+        userId: updatedRecord.patient._id,
+        title: 'Actualización de exámenes',
+        message: `El Dr. ${session.user.name} ha actualizado los exámenes en tu historial.`,
+        type: 'info',
+        link: `/mi-historial/${id}`
+      });
+    }
 
     return NextResponse.json(updatedRecord);
   } catch (error) {

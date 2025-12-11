@@ -2,7 +2,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Save, Activity, Pill } from 'lucide-react';
+import { ArrowLeft, Save, Activity, Pill, Beaker } from 'lucide-react';
 
 export default function EditarHistorialPage() {
   const { data: session, status } = useSession();
@@ -18,6 +18,7 @@ export default function EditarHistorialPage() {
     diagnosis: '',
     treatment: '',
     medications: [],
+    exams: [],
     notes: '',
     vitalSigns: {
       bloodPressure: '',
@@ -33,6 +34,13 @@ export default function EditarHistorialPage() {
     dosage: '',
     frequency: '',
     duration: ''
+  });
+
+  const [newExam, setNewExam] = useState({
+    name: '',
+    result: '',
+    notes: '',
+    date: new Date().toLocaleDateString('sv-SE')
   });
 
   useEffect(() => {
@@ -51,15 +59,19 @@ export default function EditarHistorialPage() {
       if (res.ok) {
         const data = await res.json();
         setRecord(data);
-        
+
         // Populate form with existing data
         setFormData({
-          consultDate: data.consultDate.split('T')[0],
+          consultDate: new Date(data.consultDate).toLocaleDateString('sv-SE'),
           reason: data.reason || '',
           symptoms: data.symptoms || '',
           diagnosis: data.diagnosis || '',
           treatment: data.treatment || '',
           medications: data.medications || [],
+          exams: data.exams ? data.exams.map(e => ({
+            ...e,
+            date: new Date(e.date).toLocaleDateString('sv-SE')
+          })) : [],
           notes: data.notes || '',
           vitalSigns: {
             bloodPressure: data.vitalSigns?.bloodPressure || '',
@@ -68,7 +80,7 @@ export default function EditarHistorialPage() {
             weight: data.vitalSigns?.weight || '',
             height: data.vitalSigns?.height || ''
           },
-          nextFollowUp: data.nextFollowUp ? new Date(data.nextFollowUp).toISOString().split('T')[0] : ''
+          nextFollowUp: data.nextFollowUp ? new Date(data.nextFollowUp).toLocaleDateString('sv-SE') : ''
         });
       } else {
         alert('Error al cargar historial');
@@ -123,9 +135,31 @@ export default function EditarHistorialPage() {
     }));
   };
 
+  const handleAddExam = () => {
+    if (newExam.name) {
+      setFormData(prev => ({
+        ...prev,
+        exams: [...prev.exams, newExam]
+      }));
+      setNewExam({
+        name: '',
+        result: '',
+        notes: '',
+        date: new Date().toLocaleDateString('sv-SE')
+      });
+    }
+  };
+
+  const handleRemoveExam = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      exams: prev.exams.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.reason || !formData.diagnosis) {
       alert('Por favor completa los campos requeridos: Motivo y Diagnóstico');
       return;
@@ -360,7 +394,7 @@ export default function EditarHistorialPage() {
               <Pill className="w-5 h-5 text-purple-600" />
               Medicamentos Recetados
             </h3>
-            
+
             {/* Medications List */}
             {formData.medications.length > 0 && (
               <div className="mb-6 space-y-3">
@@ -405,7 +439,7 @@ export default function EditarHistorialPage() {
                     type="text"
                     placeholder="Nombre del medicamento *"
                     value={newMedication.name}
-                    onChange={(e) => setNewMedication({...newMedication, name: e.target.value})}
+                    onChange={(e) => setNewMedication({ ...newMedication, name: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm"
                   />
                 </div>
@@ -416,14 +450,14 @@ export default function EditarHistorialPage() {
                       step="0.1"
                       placeholder="500"
                       value={newMedication.dosage}
-                      onChange={(e) => setNewMedication({...newMedication, dosage: e.target.value})}
+                      onChange={(e) => setNewMedication({ ...newMedication, dosage: e.target.value })}
                       className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm"
                     />
-                    <select 
+                    <select
                       className="px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 font-medium text-gray-700 shadow-sm"
                       onChange={(e) => {
                         const value = newMedication.dosage.replace(/[^0-9.]/g, '');
-                        setNewMedication({...newMedication, dosage: value + e.target.value});
+                        setNewMedication({ ...newMedication, dosage: value + e.target.value });
                       }}
                     >
                       <option value="mg">mg</option>
@@ -438,7 +472,7 @@ export default function EditarHistorialPage() {
                 <div>
                   <select
                     value={newMedication.frequency}
-                    onChange={(e) => setNewMedication({...newMedication, frequency: e.target.value})}
+                    onChange={(e) => setNewMedication({ ...newMedication, frequency: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white shadow-sm"
                   >
                     <option value="">Seleccionar frecuencia</option>
@@ -461,7 +495,7 @@ export default function EditarHistorialPage() {
                     <input
                       type="text"
                       placeholder="Escribir frecuencia personalizada"
-                      onChange={(e) => setNewMedication({...newMedication, frequency: e.target.value})}
+                      onChange={(e) => setNewMedication({ ...newMedication, frequency: e.target.value })}
                       className="mt-2 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm"
                     />
                   )}
@@ -470,7 +504,7 @@ export default function EditarHistorialPage() {
                 <div>
                   <select
                     value={newMedication.duration}
-                    onChange={(e) => setNewMedication({...newMedication, duration: e.target.value})}
+                    onChange={(e) => setNewMedication({ ...newMedication, duration: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white shadow-sm"
                   >
                     <option value="">Seleccionar duración</option>
@@ -487,7 +521,7 @@ export default function EditarHistorialPage() {
                     <input
                       type="text"
                       placeholder="Escribir duración personalizada"
-                      onChange={(e) => setNewMedication({...newMedication, duration: e.target.value})}
+                      onChange={(e) => setNewMedication({ ...newMedication, duration: e.target.value })}
                       className="mt-2 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm"
                     />
                   )}
@@ -502,6 +536,97 @@ export default function EditarHistorialPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                   Agregar Medicamento
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Exams */}
+          <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-xl p-6 border border-teal-100">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Beaker className="w-5 h-5 text-teal-600" />
+              Exámenes Realizados
+            </h3>
+
+            {/* Exams List */}
+            {formData.exams.length > 0 && (
+              <div className="mb-6 space-y-3">
+                {formData.exams.map((exam, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-teal-100 hover:shadow-md transition-shadow">
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <p className="font-semibold text-gray-900 text-lg">{exam.name}</p>
+                        <span className="text-sm text-gray-500">{exam.date}</span>
+                      </div>
+                      {exam.result && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          <span className="font-medium">Resultado:</span> {exam.result}
+                        </p>
+                      )}
+                      {exam.notes && (
+                        <p className="text-sm text-gray-500 mt-1 italic">{exam.notes}</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExam(index)}
+                      className="ml-4 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add Exam Form */}
+            <div className="bg-white rounded-xl p-5 border-2 border-dashed border-teal-200">
+              <p className="text-sm font-medium text-gray-700 mb-4">Agregar nuevo examen</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <input
+                    type="text"
+                    placeholder="Nombre del examen (ej. Hemograma) *"
+                    value={newExam.name}
+                    onChange={(e) => setNewExam({ ...newExam, name: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Resultado"
+                    value={newExam.result}
+                    onChange={(e) => setNewExam({ ...newExam, result: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="date"
+                    value={newExam.date}
+                    onChange={(e) => setNewExam({ ...newExam, date: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <textarea
+                    placeholder="Notas o observaciones..."
+                    value={newExam.notes}
+                    onChange={(e) => setNewExam({ ...newExam, notes: e.target.value })}
+                    rows={2}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddExam}
+                  className="md:col-span-2 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-lg hover:from-teal-700 hover:to-teal-800 font-semibold shadow-md hover:shadow-lg transition-all"
+                >
+                  <Beaker className="w-5 h-5" />
+                  Agregar Examen
                 </button>
               </div>
             </div>

@@ -12,7 +12,7 @@ function NuevoHistorialContent() {
   const [patients, setPatients] = useState([]);
   const [formData, setFormData] = useState({
     patient: '',
-    consultDate: new Date().toISOString().split('T')[0],
+    consultDate: new Date().toLocaleDateString('sv-SE'),
     reason: '',
     symptoms: '',
     diagnosis: '',
@@ -38,7 +38,7 @@ function NuevoHistorialContent() {
   });
   const [newExam, setNewExam] = useState({
     name: '',
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toLocaleDateString('sv-SE'),
     result: '',
     notes: ''
   });
@@ -97,7 +97,7 @@ function NuevoHistorialContent() {
           ...prev,
           patient: patientId,
           appointment: appointmentId,
-          consultDate: appointment.date.split('T')[0],
+          consultDate: new Date(appointment.date).toLocaleDateString('sv-SE'),
           reason: appointment.reason || '',
           notes: appointment.notes || ''
         }));
@@ -117,7 +117,7 @@ function NuevoHistorialContent() {
           ...prev,
           patient: session.patient._id,
           appointment: appointmentId || session.appointment._id,
-          consultDate: new Date(session.startedAt).toISOString().split('T')[0],
+          consultDate: new Date(session.startedAt).toLocaleDateString('sv-SE'),
           notes: prev.notes ? `${prev.notes}\n\n${durationText}` : durationText
         }));
       }
@@ -175,7 +175,7 @@ function NuevoHistorialContent() {
       }));
       setNewExam({
         name: '',
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toLocaleDateString('sv-SE'),
         result: '',
         notes: ''
       });

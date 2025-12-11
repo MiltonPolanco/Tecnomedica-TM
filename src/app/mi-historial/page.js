@@ -94,11 +94,10 @@ export default function MiHistorialPage() {
                     <button
                       key={record._id}
                       onClick={() => setSelectedRecord(record)}
-                      className={`w-full text-left p-4 rounded-lg transition-colors ${
-                        selectedRecord?._id === record._id
+                      className={`w-full text-left p-4 rounded-lg transition-colors ${selectedRecord?._id === record._id
                           ? 'bg-blue-100 border-2 border-blue-600'
                           : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <Calendar className="w-4 h-4 text-gray-600" />
@@ -240,6 +239,38 @@ export default function MiHistorialPage() {
                                 <p><span className="font-medium">Duración:</span> {med.duration}</p>
                               )}
                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Exams */}
+                  {selectedRecord.exams && selectedRecord.exams.length > 0 && (
+                    <div className="bg-white rounded-xl shadow-sm p-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Activity className="w-5 h-5 text-teal-600" />
+                        <h3 className="text-lg font-semibold text-gray-900">Exámenes Realizados</h3>
+                      </div>
+                      <div className="space-y-3">
+                        {selectedRecord.exams.map((exam, index) => (
+                          <div key={index} className="p-4 bg-teal-50 rounded-lg border border-teal-100">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="font-semibold text-gray-900">{exam.name}</p>
+                                <p className="text-sm text-gray-500">{formatDate(exam.date)}</p>
+                              </div>
+                              {exam.result && (
+                                <div className="bg-white px-3 py-1 rounded-full text-sm font-medium text-teal-700 shadow-sm">
+                                  {exam.result}
+                                </div>
+                              )}
+                            </div>
+                            {exam.notes && (
+                              <p className="mt-2 text-sm text-gray-600 italic">
+                                "{exam.notes}"
+                              </p>
+                            )}
                           </div>
                         ))}
                       </div>
