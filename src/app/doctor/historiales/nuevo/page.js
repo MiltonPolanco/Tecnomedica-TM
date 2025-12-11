@@ -18,6 +18,7 @@ function NuevoHistorialContent() {
     diagnosis: '',
     treatment: '',
     medications: [],
+    exams: [],
     notes: '',
     vitalSigns: {
       bloodPressure: '',
@@ -35,6 +36,12 @@ function NuevoHistorialContent() {
     frequency: '',
     duration: ''
   });
+  const [newExam, setNewExam] = useState({
+    name: '',
+    date: new Date().toISOString().split('T')[0],
+    result: '',
+    notes: ''
+  });
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -43,16 +50,16 @@ function NuevoHistorialContent() {
       router.push('/');
     } else if (status === 'authenticated') {
       fetchPatients();
-      
+
       // Pre-llenar datos desde la cita si viene de ahí
       const appointmentId = searchParams.get('appointmentId');
       const patientId = searchParams.get('patientId');
       const sessionId = searchParams.get('sessionId');
-      
+
       if (appointmentId && patientId) {
         fetchAppointmentData(appointmentId, patientId);
       }
-      
+
       // Si viene de una videosesión, cargar esos datos también
       if (sessionId) {
         fetchVideoSessionData(sessionId, appointmentId);
@@ -65,7 +72,7 @@ function NuevoHistorialContent() {
       const res = await fetch('/api/appointments');
       const data = await res.json();
       const appointments = data.appointments || [];
-      
+
       const uniquePatients = Array.from(
         new Map(
           appointments
@@ -73,7 +80,7 @@ function NuevoHistorialContent() {
             .map(apt => [apt.patient._id, apt.patient])
         ).values()
       );
-      
+
       setPatients(uniquePatients);
     } catch (error) {
       console.error('Error al cargar pacientes:', error);
@@ -160,9 +167,31 @@ function NuevoHistorialContent() {
     }));
   };
 
+  const handleAddExam = () => {
+    if (newExam.name) {
+      setFormData(prev => ({
+        ...prev,
+        exams: [...prev.exams, newExam]
+      }));
+      setNewExam({
+        name: '',
+        date: new Date().toISOString().split('T')[0],
+        result: '',
+        notes: ''
+      });
+    }
+  };
+
+  const handleRemoveExam = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      exams: prev.exams.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.patient || !formData.reason || !formData.diagnosis) {
       alert('Por favor completa los campos requeridos: Paciente, Motivo y Diagnóstico');
       return;
@@ -416,7 +445,7 @@ function NuevoHistorialContent() {
               <Pill className="w-5 h-5 text-purple-600" />
               Medicamentos Recetados
             </h3>
-            
+
             {/* Medications List */}
             {formData.medications.length > 0 && (
               <div className="mb-6 space-y-3">
@@ -461,7 +490,7 @@ function NuevoHistorialContent() {
                     type="text"
                     placeholder="Nombre del medicamento *"
                     value={newMedication.name}
-                    onChange={(e) => setNewMedication({...newMedication, name: e.target.value})}
+                    onChange={(e) => setNewMedication({ ...newMedication, name: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm"
                   />
                 </div>
@@ -472,14 +501,14 @@ function NuevoHistorialContent() {
                       step="0.1"
                       placeholder="500"
                       value={newMedication.dosage}
-                      onChange={(e) => setNewMedication({...newMedication, dosage: e.target.value})}
+                      onChange={(e) => setNewMedication({ ...newMedication, dosage: e.target.value })}
                       className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm"
                     />
-                    <select 
+                    <select
                       className="px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 font-medium text-gray-700 shadow-sm"
                       onChange={(e) => {
                         const value = newMedication.dosage.replace(/[^0-9.]/g, '');
-                        setNewMedication({...newMedication, dosage: value + e.target.value});
+                        setNewMedication({ ...newMedication, dosage: value + e.target.value });
                       }}
                     >
                       <option value="mg">mg</option>
@@ -494,7 +523,7 @@ function NuevoHistorialContent() {
                 <div>
                   <select
                     value={newMedication.frequency}
-                    onChange={(e) => setNewMedication({...newMedication, frequency: e.target.value})}
+                    onChange={(e) => setNewMedication({ ...newMedication, frequency: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white shadow-sm"
                   >
                     <option value="">Seleccionar frecuencia</option>
@@ -517,7 +546,7 @@ function NuevoHistorialContent() {
                     <input
                       type="text"
                       placeholder="Escribir frecuencia personalizada"
-                      onChange={(e) => setNewMedication({...newMedication, frequency: e.target.value})}
+                      onChange={(e) => setNewMedication({ ...newMedication, frequency: e.target.value })}
                       className="mt-2 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm"
                     />
                   )}
@@ -526,7 +555,7 @@ function NuevoHistorialContent() {
                 <div>
                   <select
                     value={newMedication.duration}
-                    onChange={(e) => setNewMedication({...newMedication, duration: e.target.value})}
+                    onChange={(e) => setNewMedication({ ...newMedication, duration: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white shadow-sm"
                   >
                     <option value="">Seleccionar duración</option>
@@ -543,7 +572,7 @@ function NuevoHistorialContent() {
                     <input
                       type="text"
                       placeholder="Escribir duración personalizada"
-                      onChange={(e) => setNewMedication({...newMedication, duration: e.target.value})}
+                      onChange={(e) => setNewMedication({ ...newMedication, duration: e.target.value })}
                       className="mt-2 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm"
                     />
                   )}
@@ -558,6 +587,100 @@ function NuevoHistorialContent() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                   Agregar Medicamento
+                </button>
+              </div>
+            </div>
+          </div>
+
+
+          {/* Exams */}
+          <div className="bg-gradient-to-br from-teal-50 to-green-50 rounded-xl p-6 border border-teal-100">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-teal-600" />
+              Exámenes Realizados
+            </h3>
+
+            {/* Exams List */}
+            {formData.exams.length > 0 && (
+              <div className="mb-6 space-y-3">
+                {formData.exams.map((exam, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-teal-100 hover:shadow-md transition-shadow">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-semibold text-gray-900 text-lg">{exam.name}</p>
+                        <span className="text-sm text-gray-500">{exam.date}</span>
+                      </div>
+                      {exam.result && (
+                        <p className="text-sm text-gray-700"><span className="font-medium">Resultado:</span> {exam.result}</p>
+                      )}
+                      {exam.notes && (
+                        <p className="text-xs text-gray-500 mt-1 italic">{exam.notes}</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExam(index)}
+                      className="ml-4 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add Exam Form */}
+            <div className="bg-white rounded-xl p-5 border-2 border-dashed border-teal-200">
+              <p className="text-sm font-medium text-gray-700 mb-4">Agregar nuevo examen</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <input
+                    type="text"
+                    placeholder="Nombre del examen (ej: Hemograma, Rayos X) *"
+                    value={newExam.name}
+                    onChange={(e) => setNewExam({ ...newExam, name: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Fecha</label>
+                  <input
+                    type="date"
+                    value={newExam.date}
+                    onChange={(e) => setNewExam({ ...newExam, date: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Resultado (Opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="Resultado breve"
+                    value={newExam.result}
+                    onChange={(e) => setNewExam({ ...newExam, result: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <input
+                    type="text"
+                    placeholder="Notas o observaciones adicionales"
+                    value={newExam.notes}
+                    onChange={(e) => setNewExam({ ...newExam, notes: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddExam}
+                  className="md:col-span-2 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-lg hover:from-teal-700 hover:to-teal-800 font-semibold shadow-md hover:shadow-lg transition-all"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Agregar Examen
                 </button>
               </div>
             </div>

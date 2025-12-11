@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, Calendar, FileText, User, LogOut, Activity, Shield, Clock, Clipboard } from 'lucide-react';
 import { useState } from 'react';
+import NotificationBell from './NotificationBell';
 
 export default function Header() {
   const { data: session, status } = useSession();
@@ -39,45 +40,41 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">
-            <Link 
-              href={'/'} 
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                isActive('/') 
-                  ? 'bg-blue-50 text-blue-600' 
+            <Link
+              href={'/'}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${isActive('/')
+                  ? 'bg-blue-50 text-blue-600'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
+                }`}
             >
               Inicio
             </Link>
             {status !== 'authenticated' && (
               <>
-                <Link 
+                <Link
                   href={'/servicios'}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                    isActive('/servicios') 
-                      ? 'bg-blue-50 text-blue-600' 
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${isActive('/servicios')
+                      ? 'bg-blue-50 text-blue-600'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
+                    }`}
                 >
                   Servicios
                 </Link>
-                <Link 
+                <Link
                   href={'/sobre-nosotros'}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                    isActive('/sobre-nosotros') 
-                      ? 'bg-blue-50 text-blue-600' 
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${isActive('/sobre-nosotros')
+                      ? 'bg-blue-50 text-blue-600'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
+                    }`}
                 >
                   Nosotros
                 </Link>
-                <Link 
+                <Link
                   href={'/contactanos'}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                    isActive('/contactanos') 
-                      ? 'bg-blue-50 text-blue-600' 
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${isActive('/contactanos')
+                      ? 'bg-blue-50 text-blue-600'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
+                    }`}
                 >
                   Contacto
                 </Link>
@@ -86,13 +83,12 @@ export default function Header() {
             {status === 'authenticated' && (
               <>
                 {session?.user?.role === 'admin' && (
-                  <Link 
+                  <Link
                     href={'/admin/usuarios'}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                      isActive('/admin/usuarios') 
-                        ? 'bg-blue-50 text-blue-600' 
+                    className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/admin/usuarios')
+                        ? 'bg-blue-50 text-blue-600'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
+                      }`}
                   >
                     <Shield className="w-4 h-4" />
                     Admin
@@ -100,57 +96,52 @@ export default function Header() {
                 )}
                 {session?.user?.role === 'doctor' && (
                   <>
-                    <Link 
+                    <Link
                       href={'/dashboard-doctor'}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                        isActive('/dashboard-doctor') 
-                          ? 'bg-blue-50 text-blue-600' 
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/dashboard-doctor')
+                          ? 'bg-blue-50 text-blue-600'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
+                        }`}
                     >
                       <Activity className="w-4 h-4" />
                       Dashboard
                     </Link>
-                    <Link 
+                    <Link
                       href={'/doctor/horarios'}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                        isActive('/doctor/horarios') 
-                          ? 'bg-blue-50 text-blue-600' 
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/doctor/horarios')
+                          ? 'bg-blue-50 text-blue-600'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
+                        }`}
                     >
                       <Clock className="w-4 h-4" />
                       Horarios
                     </Link>
-                    <Link 
+                    <Link
                       href={'/doctor/historiales'}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                        isActive('/doctor/historiales') 
-                          ? 'bg-blue-50 text-blue-600' 
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/doctor/historiales')
+                          ? 'bg-blue-50 text-blue-600'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
+                        }`}
                     >
                       <Clipboard className="w-4 h-4" />
                       Historiales
                     </Link>
-                    <Link 
+                    <Link
                       href={'/mi-calendario'}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                        isActive('/mi-calendario') 
-                          ? 'bg-blue-50 text-blue-600' 
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/mi-calendario')
+                          ? 'bg-blue-50 text-blue-600'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
+                        }`}
                     >
                       <Calendar className="w-4 h-4" />
                       Calendario
                     </Link>
-                    <Link 
+                    <Link
                       href={'/mis-citas'}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                        isActive('/mis-citas') 
-                          ? 'bg-blue-50 text-blue-600' 
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/mis-citas')
+                          ? 'bg-blue-50 text-blue-600'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
+                        }`}
                     >
                       <FileText className="w-4 h-4" />
                       Mis Citas
@@ -159,46 +150,42 @@ export default function Header() {
                 )}
                 {session?.user?.role === 'patient' && (
                   <>
-                    <Link 
+                    <Link
                       href={'/agendar-cita'}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                        isActive('/agendar-cita') 
-                          ? 'bg-blue-50 text-blue-600' 
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/agendar-cita')
+                          ? 'bg-blue-50 text-blue-600'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
+                        }`}
                     >
                       <Calendar className="w-4 h-4" />
                       Agendar Cita
                     </Link>
-                    <Link 
+                    <Link
                       href={'/mi-calendario'}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                        isActive('/mi-calendario') 
-                          ? 'bg-blue-50 text-blue-600' 
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/mi-calendario')
+                          ? 'bg-blue-50 text-blue-600'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
+                        }`}
                     >
                       <Calendar className="w-4 h-4" />
                       Calendario
                     </Link>
-                    <Link 
+                    <Link
                       href={'/mi-historial'}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                        isActive('/mi-historial') 
-                          ? 'bg-blue-50 text-blue-600' 
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/mi-historial')
+                          ? 'bg-blue-50 text-blue-600'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
+                        }`}
                     >
                       <Clipboard className="w-4 h-4" />
                       Mi Historial
                     </Link>
-                    <Link 
+                    <Link
                       href={'/mis-citas'}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                        isActive('/mis-citas') 
-                          ? 'bg-blue-50 text-blue-600' 
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive('/mis-citas')
+                          ? 'bg-blue-50 text-blue-600'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
+                        }`}
                     >
                       <FileText className="w-4 h-4" />
                       Mis Citas
@@ -213,7 +200,7 @@ export default function Header() {
           <div className="hidden md:flex items-center gap-3">
             {status === 'authenticated' ? (
               <>
-                <Link 
+                <Link
                   href="/perfil"
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-all"
                 >
@@ -235,7 +222,7 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Link 
+                <Link
                   href={'/login'}
                   className="px-4 py-2 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-all"
                 >
@@ -265,41 +252,37 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white">
           <div className="px-4 py-3 space-y-1">
-            <Link 
-              href={'/'} 
+            <Link
+              href={'/'}
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-4 py-2 rounded-lg font-medium ${
-                isActive('/') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-              }`}
+              className={`block px-4 py-2 rounded-lg font-medium ${isActive('/') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                }`}
             >
               Inicio
             </Link>
             {status !== 'authenticated' && (
               <>
-                <Link 
+                <Link
                   href={'/servicios'}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-4 py-2 rounded-lg font-medium ${
-                    isActive('/servicios') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                  }`}
+                  className={`block px-4 py-2 rounded-lg font-medium ${isActive('/servicios') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                    }`}
                 >
                   Servicios
                 </Link>
-                <Link 
+                <Link
                   href={'/sobre-nosotros'}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-4 py-2 rounded-lg font-medium ${
-                    isActive('/sobre-nosotros') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                  }`}
+                  className={`block px-4 py-2 rounded-lg font-medium ${isActive('/sobre-nosotros') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                    }`}
                 >
                   Nosotros
                 </Link>
-                <Link 
+                <Link
                   href={'/contactanos'}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-4 py-2 rounded-lg font-medium ${
-                    isActive('/contactanos') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                  }`}
+                  className={`block px-4 py-2 rounded-lg font-medium ${isActive('/contactanos') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                    }`}
                 >
                   Contacto
                 </Link>
@@ -308,12 +291,11 @@ export default function Header() {
             {status === 'authenticated' && (
               <>
                 {session?.user?.role === 'admin' && (
-                  <Link 
+                  <Link
                     href={'/admin/usuarios'}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                      isActive('/admin/usuarios') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                    }`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${isActive('/admin/usuarios') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                      }`}
                   >
                     <Shield className="w-4 h-4" />
                     Admin
@@ -321,52 +303,47 @@ export default function Header() {
                 )}
                 {session?.user?.role === 'doctor' && (
                   <>
-                    <Link 
+                    <Link
                       href={'/dashboard-doctor'}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                        isActive('/dashboard-doctor') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${isActive('/dashboard-doctor') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                        }`}
                     >
                       <Activity className="w-4 h-4" />
                       Dashboard
                     </Link>
-                    <Link 
+                    <Link
                       href={'/doctor/horarios'}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                        isActive('/doctor/horarios') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${isActive('/doctor/horarios') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                        }`}
                     >
                       <Clock className="w-4 h-4" />
                       Horarios
                     </Link>
-                    <Link 
+                    <Link
                       href={'/doctor/historiales'}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                        isActive('/doctor/historiales') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${isActive('/doctor/historiales') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                        }`}
                     >
                       <Clipboard className="w-4 h-4" />
                       Historiales
                     </Link>
-                    <Link 
+                    <Link
                       href={'/mi-calendario'}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                        isActive('/mi-calendario') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${isActive('/mi-calendario') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                        }`}
                     >
                       <Calendar className="w-4 h-4" />
                       Calendario
                     </Link>
-                    <Link 
+                    <Link
                       href={'/mis-citas'}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                        isActive('/mis-citas') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${isActive('/mis-citas') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                        }`}
                     >
                       <FileText className="w-4 h-4" />
                       Mis Citas
@@ -375,54 +352,49 @@ export default function Header() {
                 )}
                 {session?.user?.role === 'patient' && (
                   <>
-                    <Link 
+                    <Link
                       href={'/agendar-cita'}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                        isActive('/agendar-cita') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${isActive('/agendar-cita') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                        }`}
                     >
                       <Calendar className="w-4 h-4" />
                       Agendar Cita
                     </Link>
-                    <Link 
+                    <Link
                       href={'/mi-calendario'}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                        isActive('/mi-calendario') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${isActive('/mi-calendario') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                        }`}
                     >
                       <Calendar className="w-4 h-4" />
                       Calendario
                     </Link>
-                    <Link 
+                    <Link
                       href={'/mi-historial'}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                        isActive('/mi-historial') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${isActive('/mi-historial') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                        }`}
                     >
                       <Clipboard className="w-4 h-4" />
                       Mi Historial
                     </Link>
-                    <Link 
+                    <Link
                       href={'/mis-citas'}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                        isActive('/mis-citas') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${isActive('/mis-citas') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                        }`}
                     >
                       <FileText className="w-4 h-4" />
                       Mis Citas
                     </Link>
                   </>
                 )}
-                <Link 
+                <Link
                   href={'/perfil'}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                    isActive('/perfil') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${isActive('/perfil') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                    }`}
                 >
                   <User className="w-4 h-4" />
                   Mi Perfil
@@ -441,7 +413,7 @@ export default function Header() {
             )}
             {status !== 'authenticated' && (
               <div className="pt-3 space-y-2 border-t border-gray-100 mt-2">
-                <Link 
+                <Link
                   href={'/login'}
                   onClick={() => setMobileMenuOpen(false)}
                   className="block px-4 py-2 rounded-lg font-medium text-gray-700 hover:bg-gray-50"

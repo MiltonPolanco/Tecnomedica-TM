@@ -14,7 +14,7 @@ export default function RootLayout({ children }) {
   const isVideoCall = pathname?.startsWith('/video-call');
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AppProvider>
           <Header />

@@ -49,6 +49,17 @@ const MedicalRecordSchema = new mongoose.Schema({
     frequency: String,
     duration: String
   }],
+  exams: [{
+    name: { type: String, required: true },
+    date: { type: Date, default: Date.now },
+    result: String,
+    notes: String,
+    status: {
+      type: String,
+      enum: ['requested', 'completed', 'pending'],
+      default: 'completed'
+    }
+  }],
   notes: {
     type: String,
     trim: true,
